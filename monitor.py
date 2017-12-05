@@ -145,6 +145,7 @@ def interpret(data, timestamp):
             add_data_entry('usability events', timestamp, failed_test_data)
     except KeyError:
         pass            # Didn't fail ANY tests? move along.
+
 def record_and_interpret(timestamp, ping_transcript):
     """Read through the transcript. Break it down and record it, and then evaluate it.
     If necessary, log a usability event.
