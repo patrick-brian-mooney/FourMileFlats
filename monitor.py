@@ -15,6 +15,8 @@ See the file LICENSE for more details.
 import collections, datetime, os, pickle, subprocess, _thread, time
 from collections import OrderedDict
 
+import reporter             # part of this same package
+
 import patrick_logger       # https://github.com/patrick-brian-mooney/python-personal-library
 from patrick_logger import log_it
 
@@ -34,7 +36,7 @@ interval_between_pings = 5  # Number of minutes between the beginning of one che
 data_location = "data/"                                             # Where are we storing raw data?
 
 # report construction parameters
-reports_location = "reports/"                                       # Reports are kept here, in subfolders organized year/month
+reports_location = "reports/"                                       # Reports are kept here, in subfolders organized year/month/
 
 
 # This next group of functions handles storing and retrieving data for today's network tests.
@@ -53,13 +55,13 @@ def current_data_store_name():
     return os.path.join(data_location, _current_date() + ".pkl")
 
 def create_data_store():
-    default_data = collections.OrderedDict({'purpose of this file': 'data store for network test %s on %s' % (situation_explanation, _current_date()),
+    default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at Four Mile Flats on %s' % _current_date(),
                                             'script URL': 'https://github.com/patrick-brian-mooney/network-reporter',
                                             'script author twitter ID': '@patrick_mooney',
                                             'packets transmitted today': 0,
                                             'packets received today': 0,
                                             'ping transcripts': OrderedDict({}),
-                                            'unusability events': OrderedDict({}),
+                                            'usability events': OrderedDict({}),
                                             })
     with open(current_data_store_name(), 'wb') as the_data_file:
         pickle.dump(default_data, file=the_data_file, protocol=-1)
@@ -69,7 +71,7 @@ def get_data_store(second_try=False):
     storage dictionary cannot be read, create a new dictionary with default
     values.
 
-    :return: a dictionary containing all of the global stored data.
+    Returns a dictionary containing all of the global stored data.
     """
     try:
         with open(current_data_store_name(), 'rb') as the_data_file:
@@ -88,7 +90,7 @@ def add_data_entry(category, time, data):
     function adds an entry to one of those logs.
 
     CATEGORY is the key name in the global data store that stores an event log;
-        currently, valid choices are 'ping transcripts' and 'unusability events'.
+        currently, valid choices are 'ping transcripts' and 'usability events'.
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
     DATA is the data to store for the event. Each CATEGORY has its own DATA format:
@@ -123,19 +125,39 @@ def startup():
     check_ping_config()
     log_it("INFO: startup tasks complete", 3)
 
-def record_and_interpret(timestamp, transcript):
+def interpret(data, timestamp):
+    """Takes the DATA that record_and_interpret() collects and judges whether it
+    describes a usable connection. Logs a usability event if it determines that
+    usability is below acceptable levels.
+    """
+    failed_test_data = collections.OrderedDict({'worst_problem': 0, 'tests_failed': [][:]})
+    for test in reporter.usability_tests:
+        if test['test'](data):                                                          # Tests return True if they fail, i.e. if there's a usability problem
+            current_failure = collections.OrderedDict({'test failed': test['test_name']})  # So log the event and its relevant data
+            current_failure['relevant_data'] = {}.copy()
+            current_failure['problem_level'] = test['problem_level']
+            for key in test['data_keys_to_report']:
+                current_failure['relevant_data'][key] = data[key]
+            failed_test_data['worst_problem'] = max(failed_test_data['worst_problem'], test['problem_level'])
+            failed_test_data['tests_failed'] += [ current_failure ]
+    try:
+        if failed_test_data['worst_problem'] >= 2:          # We only log usability problem events when they impact use.
+            add_data_entry('usability events', timestamp, failed_test_data)
+    except KeyError:
+        pass            # Didn't fail ANY tests? move along.
+def record_and_interpret(timestamp, ping_transcript):
     """Read through the transcript. Break it down and record it, and then evaluate it.
-    If necessary, log an unusability event.
+    If necessary, log a usability event.
 
     Note that this is currently heavily dependent on the format of the output produced
     by the PING command. For reference, this script was developed with Linux ping
     included with iputils-s20121221.
     """
     data = dict([])
-    log_it("INFO: we're recording a transcript from %s" % timestamp, 2)
-    log_it("      transcript follows:\n\n%s\n\n" % transcript, 3)
-    lines = transcript.strip().split('\n')
-    header = lines.pop(0).rstrip('bytes of data.')          # Read the first line in the transcript
+    log_it("INFO: we're recording a ping transcript from %s" % timestamp, 2)
+    log_it("      transcript follows:\n\n%s\n\n" % ping_transcript, 3)
+    lines = ping_transcript.strip().split('\n')
+    header = lines.pop(0).rstrip('bytes of data.')          # Read the first line in the ping_transcript
     # Current format is: PING google.com (172.217.1.206) 56(84) bytes of data.
     data['executable name'], data['hostname'], data['host IP'], data['bytes'] = header.strip().split(' ')
     # Next, gather data from the last line from the file
@@ -154,7 +176,7 @@ def record_and_interpret(timestamp, transcript):
     data['time'] = trailer.split('time')[1]
     # The last remaining line is purely for display: pop it and ignore it
     _ = lines.pop()
-    # Streamline the rest of the transcript, then process it line by line
+    # Streamline the rest of the ping_transcript, then process it line by line
     lines = [ l.strip()+'\n' for l in lines if len(l.strip()) > 0 and not l.strip().startswith('---') ]
     data['log'] = [][:]
     for l in lines:
@@ -172,7 +194,7 @@ def record_and_interpret(timestamp, transcript):
         if type(data[k]) == type('string'):
             data[k] = data[k].strip()
     add_data_entry('ping transcripts', timestamp, data)
-
+    interpret(data, timestamp)
 
 def ping_test():
     """Use PING to run a network test. Returns the command's output for interpretation.
@@ -191,7 +213,7 @@ def schedule_test(delay=0):
     record_and_interpret(timestamp, transcript)
 
 def monitor():
-    """Intermittently run a ping_test(), interpret it, and log the results."""
+    """Intermittently schedule a test, run it, interpret it, and log the results."""
     log_it("INFO: beginning monitoring", 3)
     while True:
         current_time = datetime.datetime.now()
