@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""A docstring goes here, you know"""
+"""This module handles report creation for Patrick Mooney's program
+network-reporter. Like the rest of network-reporter, this module is copyright
+2017 by Patrick Mooney. It is licensed under the GNU GPL, either version 3 or,
+at your option, any later version. See the file LICENSE for details.
+"""
 
-# This series of tests is run on ping transcripts; each test looks for specific problems in the DATA passed to it and,
-# if it finds problems, determines how bad the problem is and assigns a score based on the seriousness of the
-# problem. Currently defined problem level scores are:
-network_problem_levels = {
-    0: "no impediments to normal network use",
-    1: "minor problems, probably not noticeable to user",
-    2: "network is usable, but is slow",
-    3: "network is barely usable, and even simple tasks require a great deal of user patience",
-    4: "network is essentially unusable, though it might be possible to load a web page with multiple retries",
-    5: "network is completely unusable"
-}
+
+import pickle
+
+from config import *
+
 
 # Once all of the usability tests have been run, the overall network problem score is the largest problem score
 # assigned by any test that the ping transcript has failed. (The operating theory here is we should be recording the
@@ -82,6 +80,34 @@ usability_tests = [
      'problem_level': 5,
      'data_keys_to_report': ['mdev', 'avg']},
 ]
+
+def daily_report_template():
+    """Returns an HTML template for the daily reports. This template will include
+    percent-codes for information to be filled in by the calling function.
+    """
+    ret = """<!doctype html>
+<head>
+<meta charset="utf-8" />
+<link rel="profile" href="http://microformats.org/profile/hcalendar" />
+
+"""
+    ret += ""
+    ret += """
+<title>Network report for %s</title>    <!-- current date -->
+</head>
+<body>
+</body>
+</html>
+"""
+    return ret
+
+def produce_daily_report(datafile):
+    """Produces an HTML report summarizing the day's activity. Stores it in the
+    appropriate part of the local filesystem.
+    """
+    with open(datafile, mode="rb") as data_store:
+        daily_data = pickle.load(data_store.read())
+
 
 if __name__ == "__main__":
     pass

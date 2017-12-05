@@ -15,6 +15,7 @@ See the file LICENSE for more details.
 import collections, datetime, os, pickle, subprocess, _thread, time
 from collections import OrderedDict
 
+from config import *        # Constants defining program operation.
 import reporter             # part of this same package
 
 import patrick_logger       # https://github.com/patrick-brian-mooney/python-personal-library
@@ -22,22 +23,6 @@ from patrick_logger import log_it
 
 
 patrick_logger.verbosity_level = 5
-
-# constants used by the program
-# PING configuration parameters
-ping_exec = "/bin/ping"     # Put the full path to your PING executable here.
-ping_count_flag = "-c %d"   # The flag to supply to tell the PING executable how many times to ping the remote host. Add a %d
-                            # after it so the number of attempts can be substituted in.
-number_of_packets = 100     # How many ping packets to send during each check
-ping_target = "google.com"  # Which host to ping?
-interval_between_pings = 5  # Number of minutes between the beginning of one check and the beginning of the next
-
-# data store parameters
-data_location = "data/"                                             # Where are we storing raw data?
-
-# report construction parameters
-reports_location = "reports/"                                       # Reports are kept here, in subfolders organized year/month/
-
 
 # This next group of functions handles storing and retrieving data for today's network tests.
 # This is actually an inefficient way to do this, but it'll work for the simple tasks this program needs, since there shouldn't
@@ -109,16 +94,20 @@ def check_ping_config():
     """Verify that the user-supplied PING configuration results in a useful executable
     command.
     """
+    def report_ping_error(exit_code=0, error=None, ping_transcript=""):
+        log_it("WARNING: unable to validate ping configuration.", 0)
+        if exit_code: log_it("       The return code was: %s" % exit_code, 0)
+        if error: log_it("       The system complained: %s" % error, 0)
+        log_it("       Please check the ping configuration at the top of reporter.py", 0)
+        if ping_transcript:log_it("\n\n       Transcript of interaction with PING executable:\n\n%s" % ping_transcript, 2)
+
     log_it("INFO: testing ping configuration", 3)
     try:
         ping_command = "%s %s %s" % (ping_exec, ping_count_flag % 1, ping_target)
-        result = subprocess.check_output(ping_command, shell=True)
+        status, result = subprocess.getstatusoutput(ping_command)
         log_it("INFO: successfully ran the test ping command `%s`" % ping_command, 3)
     except BaseException as e:
-        log_it("ERROR: unable to check ping configuration.", 0)
-        log_it("       The system said: %s" % e, 0)
-        log_it("       Please check the ping configuration at the top of reporter.py", 0)
-        log_it("\n\n       Transcript of interaction with PING executable:\n\n%s" % result, 2)
+        report_ping_error(error=e)
 
 def startup():
     """Execute necessary startup tasks."""
