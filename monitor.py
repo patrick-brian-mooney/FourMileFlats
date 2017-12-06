@@ -40,7 +40,7 @@ def current_data_store_name():
     return os.path.join(data_location, _current_date() + ".pkl")
 
 def create_data_store():
-    default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at Four Mile Flats on %s' % _current_date(),
+    default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at %s on %s' % (situation, _current_date()),
                                             'script URL': 'https://github.com/patrick-brian-mooney/network-reporter',
                                             'script author twitter ID': '@patrick_mooney',
                                             'packets transmitted today': 0,

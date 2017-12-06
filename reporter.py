@@ -7,7 +7,7 @@ at your option, any later version. See the file LICENSE for details.
 """
 
 
-import pickle
+import datetime, os, pickle, statistics
 
 from config import *
 
@@ -89,24 +89,98 @@ def daily_report_template():
 <head>
 <meta charset="utf-8" />
 <link rel="profile" href="http://microformats.org/profile/hcalendar" />
-
-"""
-    ret += ""
+<meta name="generator" content="https://github.com/patrick-brian-mooney/network-reporter" />
+<meta name="description" content="A networking quality report for %s." />
+<meta name="date" content="%s" />
+""" % (situation, datetime.datetime.now().isoformat())
     ret += """
-<title>Network report for %s</title>    <!-- current date -->
+<title>Network report for %s</title>
 </head>
 <body>
+<h1>Network Quality Report for %s</h1>
+%s
+<h2>Usability problem log</h2>
+%s
+<h2>Rules applied to ping tests</h2>
+%s
 </body>
-</html>
-"""
+</html>"""  # Substitute in: current date; date on which data was collected; overall summary; usability problem log, description of ping rules
     return ret
+
+def daily_summary(data):
+    """Returns an overall summary for the day's performance."""
+    trans, rec = data['packets transmitted today'], data['packets received today']
+    all_pings = []
+    for i in data['ping transcripts']:
+        all_pings += [float(n['time']) for n in data['ping transcripts'][i]['log']]
+    return """<p>Today, <code>network-monitor</code> transmitted %d and received %d packets; that's an overall packet loss rate of %.4f%%. As of the end of data recording on that day, the test interval was %d minutes and each test attempted to transmi %d packets.
+
+<p>Overall statistics for all ping tests:</p>
+<dl>
+<dt>min</dt><dd>%.4f</dd>
+<dt>avg</dt><dd>%.4f</dd>
+<dt>max</dt><dd>%.4f</dd>
+<dt>mdev</dt><dd>%.4f</dd>
+</dl>
+""" % (trans, rec, 100 * ((trans-rec)/trans), interval_between_pings, number_of_packets,
+       min(all_pings),
+       sum(all_pings)/len(all_pings),
+       max(all_pings),
+       statistics.stdev(all_pings),
+    )
+
+def problem_log(data):
+    ret = """<p>There were %d network usability events:</p>
+<ul>
+<li>%d events at level 2</li>
+<li>%d events at level 3</li>
+<li>%d events at level 4</li>
+<li>%d events at level 5</li>
+</ul>
+
+<h3>Entire log</h3>
+
+<p>Here follows a list of all logged problems. Note that failures to log are not reported; currently,
+there are several known reasons why logging fails occasionally. Even worse, the only way to detect these problems at
+present is to inspect the raw (binary) log files by reading them with the <code>pickle</code> module in Python 3.5+.
+Too, logging often begins and ends abruptly because development is still occurring. This also means that the exact
+data format written to the raw files still changes occasionally.</p>
+<p>All of this is to say that this log file is still documenting an experimental system; part of the aim of this
+particular log file that you are reading right now is to help increase the stability of that system. The above
+notices will gradually disappear or be rewritten as the system approaches a more finalized form.</p>
+<ul>
+""" % (len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 2]),
+       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 3]),
+       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 4]),
+       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 5]),
+       len(data['usability events']),
+       )
+    for timestamp, event_data in data['usability events'].items():
+        ret += "<li><strong>%s</strong> (problem level %d):\n <ul>\n" % (timestamp, event_data['worst_problem'])
+        for test in event_data['tests_failed']:
+            ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test failed'], "; ".join(["%s=%s" % (label, value) for label, value in test['relevant_data'].items()]))
+        ret += " </ul>\n</li>\n"
+    ret += "</ul>"
+    return ret
+
+def ping_rules_description():
+    """Returns a description of the rules currently used to check ping transcripts."""
+    return "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s: level %s.</li>' % (i['test_name'], i['problem_level']) for i in usability_tests])
 
 def produce_daily_report(datafile):
     """Produces an HTML report summarizing the day's activity. Stores it in the
     appropriate part of the local filesystem.
     """
     with open(datafile, mode="rb") as data_store:
-        daily_data = pickle.load(data_store.read())
+        daily_data = pickle.load(data_store)
+    report = daily_report_template() % (datetime.datetime.now().isoformat(),
+                                        os.path.basename(datafile).rstrip('.pkl'),
+                                        daily_summary(daily_data),
+                                        problem_log(daily_data),
+                                        ping_rules_description(),
+                                      )
+    with open(os.path.join(reports_location, os.path.basename(datafile).rstrip('.pkl')+'.html'), mode="w") as output_file:
+        output_file.write(report)
 
 
 if __name__ == "__main__":
