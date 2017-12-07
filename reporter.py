@@ -7,7 +7,7 @@ at your option, any later version. See the file LICENSE for details.
 """
 
 
-import datetime, os, pickle, statistics
+import datetime, inspect, os, pickle, statistics
 
 from config import *
 
@@ -120,7 +120,7 @@ def daily_summary(data):
 <dt>min</dt><dd>%.4f</dd>
 <dt>avg</dt><dd>%.4f</dd>
 <dt>max</dt><dd>%.4f</dd>
-<dt>mdev</dt><dd>%.4f</dd>
+<dt>std dev</dt><dd>%.4f</dd>
 </dl>
 """ % (trans, rec, 100 * ((trans-rec)/trans), interval_between_pings, number_of_packets,
        min(all_pings),
@@ -130,6 +130,7 @@ def daily_summary(data):
     )
 
 def problem_log(data):
+    """Returns an HTML fragment detailing the usability events logged in DATA."""
     ret = """<p>There were %d network usability events:</p>
 <ul>
 <li>%d events at level 2</li>
@@ -165,7 +166,8 @@ notices will gradually disappear or be rewritten as the system approaches a more
 
 def ping_rules_description():
     """Returns a description of the rules currently used to check ping transcripts."""
-    return "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s: level %s.</li>' % (i['test_name'], i['problem_level']) for i in usability_tests])
+    return "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s (level %s): %s.</li>' % (i['test_name'], i['problem_level'],
+                                          inspect.getsourcelines(i['test'])) for i in usability_tests])
 
 def produce_daily_report(datafile):
     """Produces an HTML report summarizing the day's activity. Stores it in the
