@@ -1,0 +1,87 @@
+<!doctype html>
+<head>
+<meta charset="utf-8" />
+<link rel="profile" href="http://microformats.org/profile/hcalendar" />
+<meta name="generator" content="https://github.com/patrick-brian-mooney/network-reporter" />
+<meta name="description" content="A networking quality report for Four Mile Flats." />
+<meta name="date" content="2017-12-11T02:27:35.690672" />
+
+<title>Network report for 2017-12-11T02:27:35.690692</title>
+</head>
+<body>
+<h1>Network Quality Report for 2017-12-11_2</h1>
+<p>Today, <code>network-monitor</code> transmitted 300 and received 288 packets; that's an overall packet loss rate of 4.0000%. As of the end of data recording on that day, the test interval was 5 minutes and each test attempted to transmi 100 packets.
+
+<p>Overall statistics for all ping tests:</p>
+<dl>
+<dt>min</dt><dd>18.1000</dd>
+<dt>avg</dt><dd>153.1778</dd>
+<dt>max</dt><dd>2225.0000</dd>
+<dt>std dev</dt><dd>272.5562</dd>
+</dl>
+
+<h2>Usability problem log</h2>
+<p>There were 3 network usability events:</p>
+<ul>
+<li>0 events at level 2</li>
+<li>0 events at level 3</li>
+<li>0 events at level 4</li>
+<li>3 events at level 5</li>
+</ul>
+
+<h3>Entire log</h3>
+
+<p>Here follows a list of all logged problems. Note that failures to log are not reported; currently,
+there are several known reasons why logging fails occasionally. Even worse, the only way to detect these problems at
+present is to inspect the raw (binary) log files by reading them with the <code>pickle</code> module in Python 3.5+.
+Too, logging often begins and ends abruptly because development is still occurring. This also means that the exact
+data format written to the raw files still changes occasionally.</p>
+<p>All of this is to say that this log file is still documenting an experimental system; part of the aim of this
+particular log file that you are reading right now is to help increase the stability of that system. The above
+notices will gradually disappear or be rewritten as the system approaches a more finalized form.</p>
+<ul>
+<li><strong>02:15:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=4%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=4%)</li>
+  <li>Failed test: Jitter above 100% (avg=85.510; mdev=117.248 ms)</li>
+ </ul>
+</li>
+<li><strong>02:20:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=4%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=4%)</li>
+  <li>Failed test: Jitter above 100% (avg=160.197; mdev=304.886 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=160.197; mdev=304.886 ms)</li>
+ </ul>
+</li>
+<li><strong>02:25:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=4%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=4%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=214.355)</li>
+  <li>Failed test: Jitter above 100% (avg=214.355; mdev=327.421 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=214.355; mdev=327.421 ms)</li>
+ </ul>
+</li>
+</ul>
+<h2>Rules applied to ping tests</h2>
+<ul>
+ <li>Packet loss above 1% (level 1): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 1,\n"], 21).</li>
+ <li>Packet loss above 3% (level 2): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 3,\n"], 25).</li>
+ <li>Packet loss above 6% (level 3): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 6,\n"], 29).</li>
+ <li>Packet loss above 13% (level 4): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 13,\n"], 33).</li>
+ <li>Packet loss above 25% (level 5): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 25,\n"], 37).</li>
+ <li>Average packet RTT above 200 ms (level 1): (["     'test': lambda data: float(data['avg']) > 200,\n"], 42).</li>
+ <li>Average packet RTT above 500 ms (level 2): (["     'test': lambda data: float(data['avg']) > 500,\n"], 46).</li>
+ <li>Average packet RTT above 1000 ms (level 3): (["     'test': lambda data: float(data['avg']) > 1000,\n"], 50).</li>
+ <li>Average packet RTT above 2000 ms (level 4): (["     'test': lambda data: float(data['avg']) > 2000,\n"], 54).</li>
+ <li>Average packet RTT above 5000 ms (level 5): (["     'test': lambda data: float(data['avg']) > 5000,\n"], 58).</li>
+ <li>Jitter above 100% (level 1): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 1,\n"], 63).</li>
+ <li>Jitter above 150% (level 2): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 1.5,\n"], 67).</li>
+ <li>Jitter above 200% (level 3): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 2,\n"], 71).</li>
+ <li>Jitter above 250% (level 4): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 2.5,\n"], 75).</li>
+ <li>Jitter above 300% (level 5): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 3,\n"], 79).</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!doctype html>
+<head>
+<meta charset="utf-8" />
+<link rel="profile" href="http://microformats.org/profile/hcalendar" />
+<meta name="generator" content="https://github.com/patrick-brian-mooney/network-reporter" />
+<meta name="description" content="A networking quality report for Four Mile Flats." />
+<meta name="date" content="2017-12-11T02:20:40.133661" />
+
+<title>Network report for 2017-12-11T02:20:40.133688</title>
+</head>
+<body>
+<h1>Network Quality Report for 2017-12-10</h1>
+<p>Today, <code>network-monitor</code> transmitted 2900 and received 2667 packets; that's an overall packet loss rate of 8.0345%. As of the end of data recording on that day, the test interval was 5 minutes and each test attempted to transmi 100 packets.
+
+<p>Overall statistics for all ping tests:</p>
+<dl>
+<dt>min</dt><dd>16.5000</dd>
+<dt>avg</dt><dd>159.4893</dd>
+<dt>max</dt><dd>5169.0000</dd>
+<dt>std dev</dt><dd>332.9668</dd>
+</dl>
+
+<h2>Usability problem log</h2>
+<p>There were 11 network usability events:</p>
+<ul>
+<li>14 events at level 2</li>
+<li>3 events at level 3</li>
+<li>1 events at level 4</li>
+<li>29 events at level 5</li>
+</ul>
+
+<h3>Entire log</h3>
+
+<p>Here follows a list of all logged problems. Note that failures to log are not reported; currently,
+there are several known reasons why logging fails occasionally. Even worse, the only way to detect these problems at
+present is to inspect the raw (binary) log files by reading them with the <code>pickle</code> module in Python 3.5+.
+Too, logging often begins and ends abruptly because development is still occurring. This also means that the exact
+data format written to the raw files still changes occasionally.</p>
+<p>All of this is to say that this log file is still documenting an experimental system; part of the aim of this
+particular log file that you are reading right now is to help increase the stability of that system. The above
+notices will gradually disappear or be rewritten as the system approaches a more finalized form.</p>
+<ul>
+<li><strong>21:35:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=5%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=5%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=213.338)</li>
+  <li>Failed test: Jitter above 100% (avg=213.338; mdev=238.954 ms)</li>
+ </ul>
+</li>
+<li><strong>21:40:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=5%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=5%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=236.372)</li>
+  <li>Failed test: Jitter above 100% (avg=236.372; mdev=508.609 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=236.372; mdev=508.609 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=236.372; mdev=508.609 ms)</li>
+ </ul>
+</li>
+<li><strong>21:45:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=199.293; mdev=218.326 ms)</li>
+ </ul>
+</li>
+<li><strong>21:50:00</strong> (problem level 4):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=17%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=17%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=17%)</li>
+  <li>Failed test: Packet loss above 13% (packet loss=17%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=281.036)</li>
+  <li>Failed test: Jitter above 100% (avg=281.036; mdev=298.352 ms)</li>
+ </ul>
+</li>
+<li><strong>21:55:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=5%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=5%)</li>
+ </ul>
+</li>
+<li><strong>22:00:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=151.159; mdev=174.849 ms)</li>
+ </ul>
+</li>
+<li><strong>22:05:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=7%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=7%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=7%)</li>
+ </ul>
+</li>
+<li><strong>22:10:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=410.041)</li>
+  <li>Failed test: Jitter above 100% (avg=410.041; mdev=986.937 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=410.041; mdev=986.937 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=410.041; mdev=986.937 ms)</li>
+ </ul>
+</li>
+<li><strong>22:15:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=11%)</li>
+  <li>Failed test: Jitter above 100% (avg=180.535; mdev=260.504 ms)</li>
+ </ul>
+</li>
+<li><strong>22:20:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=12%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=12%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=12%)</li>
+ </ul>
+</li>
+<li><strong>22:25:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=10%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=202.912)</li>
+  <li>Failed test: Jitter above 100% (avg=202.912; mdev=214.639 ms)</li>
+ </ul>
+</li>
+<li><strong>22:30:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=9%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=9%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=9%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=205.263)</li>
+  <li>Failed test: Jitter above 100% (avg=205.263; mdev=331.549 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=205.263; mdev=331.549 ms)</li>
+ </ul>
+</li>
+<li><strong>22:35:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=129.061; mdev=166.367 ms)</li>
+ </ul>
+</li>
+<li><strong>22:40:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=5%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=5%)</li>
+  <li>Failed test: Jitter above 100% (avg=129.732; mdev=305.460 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=129.732; mdev=305.460 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=129.732; mdev=305.460 ms)</li>
+ </ul>
+</li>
+<li><strong>22:45:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=10%)</li>
+  <li>Failed test: Jitter above 100% (avg=136.516; mdev=147.873 ms)</li>
+ </ul>
+</li>
+<li><strong>22:50:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=135.713; mdev=260.319 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=135.713; mdev=260.319 ms)</li>
+ </ul>
+</li>
+<li><strong>22:55:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=11%)</li>
+  <li>Failed test: Jitter above 100% (avg=105.315; mdev=155.416 ms)</li>
+ </ul>
+</li>
+<li><strong>23:00:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=129.050; mdev=222.156 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=129.050; mdev=222.156 ms)</li>
+ </ul>
+</li>
+<li><strong>23:05:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=8%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=8%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=8%)</li>
+ </ul>
+</li>
+<li><strong>23:10:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=5%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=5%)</li>
+ </ul>
+</li>
+<li><strong>23:15:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=7%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=7%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=7%)</li>
+  <li>Failed test: Jitter above 100% (avg=118.035; mdev=144.768 ms)</li>
+ </ul>
+</li>
+<li><strong>23:20:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=11%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=11%)</li>
+  <li>Failed test: Jitter above 100% (avg=83.816; mdev=129.776 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=83.816; mdev=129.776 ms)</li>
+ </ul>
+</li>
+<li><strong>23:25:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+ </ul>
+</li>
+<li><strong>23:30:00</strong> (problem level 4):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=8%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=8%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=8%)</li>
+  <li>Failed test: Jitter above 100% (avg=192.128; mdev=567.877 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=192.128; mdev=567.877 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=192.128; mdev=567.877 ms)</li>
+  <li>Failed test: Jitter above 250% (avg=192.128; mdev=567.877 ms)</li>
+ </ul>
+</li>
+<li><strong>23:35:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=4%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=4%)</li>
+  <li>Failed test: Jitter above 100% (avg=108.399; mdev=188.975 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=108.399; mdev=188.975 ms)</li>
+ </ul>
+</li>
+<li><strong>23:40:00</strong> (problem level 2):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=107.206; mdev=124.436 ms)</li>
+ </ul>
+</li>
+<li><strong>23:45:00</strong> (problem level 4):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=19%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=19%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=19%)</li>
+  <li>Failed test: Packet loss above 13% (packet loss=19%)</li>
+  <li>Failed test: Jitter above 100% (avg=88.693; mdev=95.929 ms)</li>
+ </ul>
+</li>
+<li><strong>23:50:00</strong> (problem level 5):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=10%)</li>
+  <li>Failed test: Packet loss above 6% (packet loss=10%)</li>
+  <li>Failed test: Average packet RTT above 200 ms (avg=206.864)</li>
+  <li>Failed test: Jitter above 100% (avg=206.864; mdev=690.859 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=206.864; mdev=690.859 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=206.864; mdev=690.859 ms)</li>
+  <li>Failed test: Jitter above 250% (avg=206.864; mdev=690.859 ms)</li>
+  <li>Failed test: Jitter above 300% (avg=206.864; mdev=690.859 ms)</li>
+ </ul>
+</li>
+<li><strong>23:55:00</strong> (problem level 3):
+ <ul>
+  <li>Failed test: Packet loss above 1% (packet loss=6%)</li>
+  <li>Failed test: Packet loss above 3% (packet loss=6%)</li>
+  <li>Failed test: Jitter above 100% (avg=151.442; mdev=350.511 ms)</li>
+  <li>Failed test: Jitter above 150% (avg=151.442; mdev=350.511 ms)</li>
+  <li>Failed test: Jitter above 200% (avg=151.442; mdev=350.511 ms)</li>
+ </ul>
+</li>
+</ul>
+<h2>Rules applied to ping tests</h2>
+<ul>
+ <li>Packet loss above 1% (level 1): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 1,\n"], 21).</li>
+ <li>Packet loss above 3% (level 2): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 3,\n"], 25).</li>
+ <li>Packet loss above 6% (level 3): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 6,\n"], 29).</li>
+ <li>Packet loss above 13% (level 4): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 13,\n"], 33).</li>
+ <li>Packet loss above 25% (level 5): (["     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 25,\n"], 37).</li>
+ <li>Average packet RTT above 200 ms (level 1): (["     'test': lambda data: float(data['avg']) > 200,\n"], 42).</li>
+ <li>Average packet RTT above 500 ms (level 2): (["     'test': lambda data: float(data['avg']) > 500,\n"], 46).</li>
+ <li>Average packet RTT above 1000 ms (level 3): (["     'test': lambda data: float(data['avg']) > 1000,\n"], 50).</li>
+ <li>Average packet RTT above 2000 ms (level 4): (["     'test': lambda data: float(data['avg']) > 2000,\n"], 54).</li>
+ <li>Average packet RTT above 5000 ms (level 5): (["     'test': lambda data: float(data['avg']) > 5000,\n"], 58).</li>
+ <li>Jitter above 100% (level 1): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 1,\n"], 63).</li>
+ <li>Jitter above 150% (level 2): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 1.5,\n"], 67).</li>
+ <li>Jitter above 200% (level 3): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 2,\n"], 71).</li>
+ <li>Jitter above 250% (level 4): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 2.5,\n"], 75).</li>
+ <li>Jitter above 300% (level 5): (["     'test': lambda data: (float(data['mdev'].strip().strip('ms').strip()) / float(data['avg']) ) > 3,\n"], 79).</li>
+</ul>
+</body>
+</html>

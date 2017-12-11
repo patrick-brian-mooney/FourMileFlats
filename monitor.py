@@ -39,7 +39,19 @@ def current_data_store_name():
     """
     return os.path.join(data_location, _current_date() + ".pkl")
 
+def current_timestamp():
+    return datetime.datetime.now().time().strftime('%H:%M:%S')
+
+def get_ping_version():
+    """Ask the PING executable what its version is."""
+    return subprocess.check_output('%s %s' % (ping_exec, ping_version_flag), shell=True).decode().strip()
+
 def create_data_store():
+    """Create a new data store for the current day. This should only be called when
+    there is no existing data store for the current date; if it's ever called when
+    that's not the case, it will happily overwrite the existing data store with a
+    new blank one.
+    """
     default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at %s on %s' % (situation, _current_date()),
                                             'script URL': 'https://github.com/patrick-brian-mooney/network-reporter',
                                             'script author twitter ID': '@patrick_mooney',
@@ -47,6 +59,7 @@ def create_data_store():
                                             'packets received today': 0,
                                             'ping transcripts': OrderedDict({}),
                                             'usability events': OrderedDict({}),
+                                            'ping version': get_ping_version(),
                                             })
     with open(current_data_store_name(), 'wb') as the_data_file:
         pickle.dump(default_data, file=the_data_file, protocol=-1)
@@ -189,7 +202,13 @@ def record_and_interpret(timestamp, ping_transcript):
 def ping_test():
     """Use PING to run a network test. Returns the command's output for interpretation.
     """
-    return subprocess.check_output("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target), shell=True).decode()
+    status, output = subprocess.getstatusoutput("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target))
+    if status:      # Non-zero exit code means we couldn't ping. Log it as a serious error.
+        failed_test_data = OrderedDict({'test failed': 'PING returned non-zero exit status'})
+        failed_test_data['relevant_data'] = {'status code': status, 'output': output}
+        failed_test_data['problem_level'], failed_test_data['worst_problem'] = 5, 5
+        add_data_entry('usability events', current_timestamp(), failed_test_data)
+    return output
 
 def schedule_test(delay=0):
     """Waits DELAY seconds, then runs a text, interprets it, and stores the results.
@@ -197,7 +216,7 @@ def schedule_test(delay=0):
     log_it("INFO: scheduling next ping test for %d seconds from now" % delay, 3)
     time.sleep(delay)
     log_it("INFO: beginning ping test ...", 1)
-    timestamp = datetime.datetime.now().time().strftime('%H:%M:%S')
+    timestamp = current_timestamp()
     transcript = ping_test()
     log_it("INFO: ping test complete, interpreting ...", 2)
     record_and_interpret(timestamp, transcript)

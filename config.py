@@ -11,6 +11,7 @@ details.
 ping_exec = "/bin/ping"     # Put the full path to your PING executable here.
 ping_count_flag = "-c %d"   # The flag to supply to tell the PING executable how many times to ping the remote host. Add a %d
                             # after it so the number of attempts can be substituted in.
+ping_version_flag = "-V"    # What flag do we pass to the PING executable to get its version string from it?
 
 # Who, how often, and how long to ping
 ping_target = "google.com"  # Which host to ping?
