@@ -204,10 +204,11 @@ def ping_test():
     """
     status, output = subprocess.getstatusoutput("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target))
     if status:      # Non-zero exit code means we couldn't ping. Log it as a serious error.
-        failed_test_data = OrderedDict({'test failed': 'PING returned non-zero exit status'})
-        failed_test_data['relevant_data'] = {'status code': status, 'output': output}
-        failed_test_data['problem_level'], failed_test_data['worst_problem'] = 5, 5
-        add_data_entry('usability events', current_timestamp(), failed_test_data)
+        failure_data = OrderedDict({'worst_problem': 5 })
+        failure_data['tests_failed'] = [ {'test failed': 'PING returned non-zero exit status' }, ]
+        failure_data['tests_failed'][0]['relevant_data'] = {'status code': status, 'output': output}
+        failure_data['tests_failed'][0]['problem_level'] = 5
+        add_data_entry('usability events', current_timestamp(), failure_data)
     return output
 
 def schedule_test(delay=0):
