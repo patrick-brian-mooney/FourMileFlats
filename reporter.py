@@ -100,22 +100,11 @@ usability_tests = [
 ]
 
 def daily_report_template():
-    """Returns an HTML template for the daily reports. This template will include
+    """Returns a markdown template for the daily reports. This template will include
     percent-codes for information to be filled in by the calling function.
     """
-    ret = """<!doctype html>
-<head>
-<meta charset="utf-8" />
-<link rel="profile" href="http://microformats.org/profile/hcalendar" />
-<meta name="generator" content="Bluefish 2.2.7" />
-<meta name="description" content="A networking quality report for %s." />
-<meta name="date" content="2017-12-25T03:14:51-0700" />
-""" % (situation, datetime.datetime.now().isoformat())
-    ret += """
-<title>Network report for %s</title>
-</head>
-<body>
-<h1>Network Quality Report for %s</h1>
+    ret = """
+#Network Quality Report for %s</h1>
 %s
 <h2>Usability problem log</h2>
 %s
@@ -180,7 +169,7 @@ disclaimers will gradually disappear or be rewritten as the system approaches a 
             ret += "<li><strong>%s</strong> (problem level %d):\n <ul>\n" % (timestamp, event_data['worst_problem'])
             if 'tests_failed' in event_data:
                 for test in event_data['tests_failed']:
-                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test failed'], "; ".join(["%s=%s" % (label, value) for label, value in test['relevant_data'].items()]))
+                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test_failed'], "; ".join(["%s=%s" % (label, value) for label, value in test['relevant_data'].items()]))
             else:
                 log_it("WARNING: apparently, no tests were failed here. What's going on?", 1)
             ret += " </ul>\n</li>\n"

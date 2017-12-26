@@ -18,7 +18,7 @@ ping_target = "google.com"  # Which host to ping?
 interval_between_pings = 5  # Number of minutes between the beginning of one check and the beginning of the next
 number_of_packets = 100     # How many ping packets to send during each check
 
-# "Situation" is the location or other location-like description in which the network is being run
+# "Situation" is the location or other location-like description in which the network test is being run
 situation = "Four Mile Flats"
 
 # Locations in the local filesystem.

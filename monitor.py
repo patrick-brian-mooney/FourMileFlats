@@ -58,7 +58,7 @@ def create_data_store():
                                             'packets transmitted today': 0,
                                             'packets received today': 0,
                                             'ping transcripts': OrderedDict({}),
-                                            'usability events': OrderedDict({}),
+                                            'usability_events': OrderedDict({}),
                                             'ping version': get_ping_version(),
                                             })
     with open(current_data_store_name(), 'wb') as the_data_file:
@@ -88,7 +88,7 @@ def add_data_entry(category, time, data):
     function adds an entry to one of those logs.
 
     CATEGORY is the key name in the global data store that stores an event log;
-        currently, valid choices are 'ping transcripts' and 'usability events'.
+        currently, valid choices are 'ping transcripts' and 'usability_events'.
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
     DATA is the data to store for the event. Each CATEGORY has its own DATA format:
@@ -134,17 +134,21 @@ def interpret(data, timestamp):
     """
     failed_test_data = collections.OrderedDict({'worst_problem': 0, 'tests_failed': [][:]})
     for test in reporter.usability_tests:
-        if test['test'](data):                                                          # Tests return True if they fail, i.e. if there's a usability problem
-            current_failure = collections.OrderedDict({'test failed': test['test_name']})  # So log the event and its relevant data
+        if test['test'](data):          # Tests return True if they fail, i.e. if there's a usability problem
+            current_failure = collections.OrderedDict({'test_failed': test['test_name']})  # So log the event and its relevant data
             current_failure['relevant_data'] = {}.copy()
             current_failure['problem_level'] = test['problem_level']
+            current_failure['test_group'] = test['test_group']
             for key in test['data_keys_to_report']:
                 current_failure['relevant_data'][key] = data[key]
             failed_test_data['worst_problem'] = max(failed_test_data['worst_problem'], test['problem_level'])
             failed_test_data['tests_failed'] += [ current_failure ]
     try:
         if failed_test_data['worst_problem'] >= 2:          # We only log usability problem events when they impact use.
-            add_data_entry('usability events', timestamp, failed_test_data)
+            # First, prune the data so only the worst experienced version of each problem category remains
+
+            # Now, add the entry
+            add_data_entry('usability_events', timestamp, failed_test_data)
     except KeyError:
         pass            # Didn't fail ANY tests? move along.
 
@@ -205,14 +209,15 @@ def ping_test():
     status, output = subprocess.getstatusoutput("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target))
     if status:      # Non-zero exit code means we couldn't ping. Log it as a serious error.
         failure_data = OrderedDict({'worst_problem': 5 })
-        failure_data['tests_failed'] = [ {'test failed': 'PING returned non-zero exit status' }, ]
-        failure_data['tests_failed'][0]['relevant_data'] = {'status code': status, 'output': output}
+        failure_data['tests_failed'] = [ {'test_failed': 'PING returned non-zero exit status' }, ]
+        failure_data['tests_failed'][0]['relevant_data'] = {'status_code': status, 'output': output}
         failure_data['tests_failed'][0]['problem_level'] = 5
-        add_data_entry('usability events', current_timestamp(), failure_data)
+        failure_data['tests_failed'][0]['test_group'] = 'ping failure'
+        add_data_entry('usability_events', current_timestamp(), failure_data)
     return output
 
 def schedule_test(delay=0):
-    """Waits DELAY seconds, then runs a text, interprets it, and stores the results.
+    """Waits DELAY seconds; then, runs a test, interprets it, and stores the results.
     """
     log_it("INFO: scheduling next ping test for %d seconds from now" % delay, 3)
     time.sleep(delay)
