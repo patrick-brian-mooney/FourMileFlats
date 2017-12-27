@@ -55,9 +55,9 @@ def create_data_store():
     default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at %s on %s' % (situation, _current_date()),
                                             'script URL': 'https://github.com/patrick-brian-mooney/network-reporter',
                                             'script author twitter ID': '@patrick_mooney',
-                                            'packets transmitted today': 0,
-                                            'packets received today': 0,
-                                            'ping transcripts': OrderedDict({}),
+                                            'packets_transmitted_today': 0,
+                                            'packets_received_today': 0,
+                                            'ping_transcripts': OrderedDict({}),
                                             'usability_events': OrderedDict({}),
                                             'ping version': get_ping_version(),
                                             })
@@ -92,7 +92,7 @@ def add_data_entry(category, time, data):
     function adds an entry to one of those logs.
 
     CATEGORY is the key name in the global data store that stores an event log;
-        currently, valid choices are 'ping transcripts' and 'usability_events'.
+        currently, valid choices are 'ping_transcripts' and 'usability_events'.
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
     DATA is the data to store for the event. Each CATEGORY has its own DATA format:
@@ -103,12 +103,12 @@ def add_data_entry(category, time, data):
     daily_data[category][time] = data
 
     # Handling for special-casing of monitored and calculated values happens below.
-    if category == 'ping transcripts':
+    if category == 'ping_transcripts':
         try:
-            daily_data['packets transmitted today'] += int(data['packets transmitted'])
+            daily_data['packets_transmitted_today'] += int(data['packets_transmitted'])
         except KeyError: pass
         try:
-            daily_data['packets received today'] += int(data['received'])
+            daily_data['packets_received_today'] += int(data['received'])
         except KeyError: pass
     with open(current_data_store_name(), 'wb') as the_data_file:
         pickle.dump(daily_data, file=the_data_file, protocol=-1)
@@ -179,12 +179,12 @@ def record_and_interpret(timestamp, ping_transcript):
         lines = ping_transcript.strip().split('\n')
         header = lines.pop(0).rstrip('bytes of data.')          # Read the first line in the ping_transcript
         # Current format is: PING google.com (172.217.1.206) 56(84) bytes of data.
-        data['executable name'], data['hostname'], data['host IP'], data['bytes'] = header.strip().split(' ')
+        data['executable_name'], data['hostname'], data['host_IP'], data['bytes'] = header.strip().split(' ')
         # Next, gather data from the last line from the file
         trailer = lines.pop().lstrip('rtt').strip()
         label, trailer = trailer.split('=')
         if ',' in trailer:
-            stats, data['pipe num'] = trailer.split(',')
+            stats, data['pipe_num'] = trailer.split(',')
         else:
             stats = trailer.strip()
         data.update(dict(zip(label.strip().split('/'), stats.strip().split('/'))))
@@ -193,12 +193,12 @@ def record_and_interpret(timestamp, ping_transcript):
         errors_pos = trailer.find("errors")
         if errors_pos != -1:
             log_it("WARNING: network errors detected; we may be about to crash")
-        data['packets transmitted'], trailer = trailer.split('packets transmitted,')
+        data['packets_transmitted'], trailer = trailer.split('packets transmitted,')
         data['received'], trailer = trailer.split(' received,')
         if trailer.strip().startswith('+') and "errors" in trailer:
             errors, trailer = trailer.split('errors, ')
             data['errors'] = errors.strip().lstrip('+').strip()
-        data['packet loss'], trailer = trailer.split('packet loss,')
+        data['packet_loss'], trailer = trailer.split('packet loss,')
         data['time'] = trailer.split('time')[1]
         # The last remaining line is purely cosmetic: pop it and ignore it
         _ = lines.pop()
@@ -211,7 +211,7 @@ def record_and_interpret(timestamp, ping_transcript):
             if "net unreachable" in the_line:
                 event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
             else:
-                data['return packet size'], the_line = the_line.strip().split('bytes from')
+                data['return_packet_size'], the_line = the_line.strip().split('bytes from')
                 data['host ID (reverse DNS?)'], the_line = the_line.split('(')
                 _, the_line = the_line.split(':')               # Drop the IP address, which we've already seen anyway.`
                 icmp, ttl, time, _ = the_line.strip().split(' ')
@@ -222,7 +222,7 @@ def record_and_interpret(timestamp, ping_transcript):
     for k in data:                              # Clean up leading and trailing whitespace in the data.
         if type(data[k]) == type('string'):
             data[k] = data[k].strip()
-    add_data_entry('ping transcripts', timestamp, data)
+    add_data_entry('ping_transcripts', timestamp, data)
     interpret(data, timestamp)
 
 def ping_test():
@@ -231,12 +231,12 @@ def ping_test():
     status, output = subprocess.getstatusoutput("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target))
     if status:      # Non-zero exit code means we couldn't ping. Log it as a serious error.
         failure_data = OrderedDict({'worst_problem': 5 })
-        failure_data['tests_failed'] = [ {'test_failed': 'PING returned non-zero exit status' }, ]
-        failure_data['tests_failed'][0]['relevant_data'] = {'status_code': status}
+        failure_data['tests_failed'] = [ {'test_failed': 'PING returned non-zero exit status',
+                                          'relevant_data': {'status_code': status},
+                                          'problem_level': 5,
+                                          'test_group': 'ping failure' }, ]
         if len(output) < 512:
             failure_data['tests_failed'][0]['relevant_data']['transcript'] = output
-        failure_data['tests_failed'][0]['problem_level'] = 5
-        failure_data['tests_failed'][0]['test_group'] = 'ping failure'
         add_data_entry('usability_events', current_timestamp(), failure_data)
     return output
 

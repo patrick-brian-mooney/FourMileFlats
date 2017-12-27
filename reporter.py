@@ -21,30 +21,30 @@ from patrick_logger import log_it
 
 usability_tests = [
     {'test_name': 'Packet loss above 1%',
-     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 1,
+     'test': lambda data: int(data['packet_loss'].strip().strip('%').strip()) > 1,
      'problem_level': 1,
-     'data_keys_to_report': ['packet loss'],
-     'test_group': 'packet loss'},
+     'data_keys_to_report': ['packet_loss'],
+     'test_group': 'packet_loss'},
     {'test_name': 'Packet loss above 3%',
-     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 3,
+     'test': lambda data: int(data['packet_loss'].strip().strip('%').strip()) > 3,
      'problem_level': 2,
-     'data_keys_to_report': ['packet loss'],
-     'test_group': 'packet loss'},
+     'data_keys_to_report': ['packet_loss'],
+     'test_group': 'packet_loss'},
     {'test_name': 'Packet loss above 6%',
-     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 6,
+     'test': lambda data: int(data['packet_loss'].strip().strip('%').strip()) > 6,
      'problem_level': 3,
-     'data_keys_to_report': ['packet loss'],
-     'test_group': 'packet loss'},
+     'data_keys_to_report': ['packet_loss'],
+     'test_group': 'packet_loss'},
     {'test_name': 'Packet loss above 13%',
-     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 13,
+     'test': lambda data: int(data['packet_loss'].strip().strip('%').strip()) > 13,
      'problem_level': 4,
-     'data_keys_to_report': ['packet loss'],
-     'test_group': 'packet loss'},
+     'data_keys_to_report': ['packet_loss'],
+     'test_group': 'packet_loss'},
     {'test_name': 'Packet loss above 25%',
-     'test': lambda data: int(data['packet loss'].strip().strip('%').strip()) > 25,
+     'test': lambda data: int(data['packet_loss'].strip().strip('%').strip()) > 25,
      'problem_level': 5,
-     'data_keys_to_report': ['packet loss'],
-     'test_group': 'packet loss'},
+     'data_keys_to_report': ['packet_loss'],
+     'test_group': 'packet_loss'},
 
     {'test_name': 'Average packet RTT above 200 ms',
      'test': lambda data: float(data['avg']) > 200,
@@ -126,10 +126,10 @@ def daily_report_template():
 
 def daily_summary(data):
     """Returns an overall summary for the day's performance."""
-    trans, rec = data['packets transmitted today'], data['packets received today']
+    trans, rec = data['packets_transmitted_today'], data['packets_received_today']
     all_pings = []
-    for i in data['ping transcripts']:
-        all_pings += [float(n['time']) for n in data['ping transcripts'][i]['log']]
+    for i in data['ping_transcripts']:
+        all_pings += [float(n['time']) for n in data['ping_transcripts'][i]['log']]
     drop_pct = 100 * ((trans-rec)/trans) if (trans > 0) else 0
     return """Today, <code>network-monitor</code> transmitted %d and received %d packets; that's an overall packet loss rate of %.4f%%. As of the end of data recording on that day, the test interval was %d minutes and each test attempted to transmit %d packets.
 
@@ -180,8 +180,7 @@ disclaimers will gradually disappear or be rewritten as the system approaches a 
             ret += "<li><strong>%s</strong> (problem level %d):\n <ul>\n" % (timestamp, event_data['worst_problem'])
             try:
                 for test in event_data['tests_failed']:
-                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test_failed'], "; ".join(["%s=%s" % (label,
-                                                                                                           value) for label, value in test['relevant_data'].items()]))
+                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test_failed'], "; ".join(["%s=%s" % (label, value) for label, value in test['relevant_data'].items()]))
             except BaseException:
                 log_it("WARNING: apparently, no tests were failed here. What's going on?", 1)
             ret += " </ul>\n</li>\n"
@@ -197,8 +196,7 @@ def single_rule_description(test):
 
 def ping_rules_description():
     """Returns a description of the rules currently used to check ping transcripts."""
-    ret = "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s (level %s): <i><code>%s</code></i>.</li>' % (i['test_name'], i['problem_level'],
-                                          single_rule_description(i['test'])) for i in usability_tests])
+    ret = "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s (level %s): <i><code>%s</code></i>.</li>' % (i['test_name'], i['problem_level'], single_rule_description(i['test'])) for i in usability_tests])
     ret += "\nAnother rule that is always applied: if <code>ping</code> fails with a DNS lookup failure (or for any other reason), this is considered to be a **level 5** usability event."
     return ret
 
