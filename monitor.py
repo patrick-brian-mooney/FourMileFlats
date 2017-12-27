@@ -67,10 +67,11 @@ def create_data_store():
 def get_data_store(which_store=None, second_try=False):
     """Private function to get an entire stored data dictionary. If the data
     storage dictionary cannot be read, create a new dictionary with default
-    values. If WHICH_STORE is None, then it returns the current data store;
-    otherwise, it returns the data from the store specified by WHICH_STORE.
+    values. If WHICH_STORE is None, then it returns data frp, the current data
+    store; otherwise, it returns the data from the store specified by WHICH_STORE.
 
-    Returns a dictionary containing all of the stored data from that data store.
+    Returns a dictionary containing all of the stored data from the specified
+    data store.
     """
     if which_store == None:
         which_store = current_data_store_name()
@@ -100,9 +101,15 @@ def add_data_entry(category, time, data):
     """
     daily_data = get_data_store()
     daily_data[category][time] = data
+
+    # Handling for special-casing of monitored and calculated values happens below.
     if category == 'ping transcripts':
-        daily_data['packets transmitted today'] += int(data['packets transmitted'])
-        daily_data['packets received today'] += int(data['received'])
+        try:
+            daily_data['packets transmitted today'] += int(data['packets transmitted'])
+        except KeyError: pass
+        try:
+            daily_data['packets received today'] += int(data['received'])
+        except KeyError: pass
     with open(current_data_store_name(), 'wb') as the_data_file:
         pickle.dump(daily_data, file=the_data_file, protocol=-1)
 
@@ -166,7 +173,7 @@ def record_and_interpret(timestamp, ping_transcript):
     data = dict([])
     log_it("INFO: we're recording a ping transcript from %s" % timestamp, 2)
     log_it("      transcript follows:\n\n%s\n\n" % ping_transcript, 3)
-    if "temporary failure in name resolution" in ping_transcript.lower():
+    if "failure in name" in ping_transcript.lower():
         data['transcript'] = ping_transcript
     else:
         lines = ping_transcript.strip().split('\n')
