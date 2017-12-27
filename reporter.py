@@ -97,6 +97,12 @@ usability_tests = [
      'problem_level': 5,
      'data_keys_to_report': ['mdev', 'avg'],
      'test_group': 'high jitter'},
+
+    {'test_name': 'Fundamental networking errors',
+     'test': lambda data: 'errors' in data,
+     'problem_level': 4,
+     'data_keys_to_report': ['errors'],
+     'test_group': 'unreachable'},
 ]
 
 def daily_report_template():
@@ -104,14 +110,18 @@ def daily_report_template():
     percent-codes for information to be filled in by the calling function.
     """
     ret = """
-#Network Quality Report for %s</h1>
+# Network Quality Report for %s
+
 %s
-<h2>Usability problem log</h2>
+
+## Usability problem log
+
 %s
-<h2>Rules applied to ping tests</h2>
+
+## Tests applied to ping transcripts
+
 %s
-</body>
-</html>"""  # Substitute in: current date; date on which data was collected; overall summary; usability problem log, description of ping rules
+"""  # Substitute in: date on which data was collected; overall summary; usability problem log, description of ping rules
     return ret
 
 def daily_summary(data):
@@ -121,9 +131,10 @@ def daily_summary(data):
     for i in data['ping transcripts']:
         all_pings += [float(n['time']) for n in data['ping transcripts'][i]['log']]
     drop_pct = 100 * ((trans-rec)/trans) if (trans > 0) else 0
-    return """<p>Today, <code>network-monitor</code> transmitted %d and received %d packets; that's an overall packet loss rate of %.4f%%. As of the end of data recording on that day, the test interval was %d minutes and each test attempted to transmit %d packets.
+    return """Today, <code>network-monitor</code> transmitted %d and received %d packets; that's an overall packet loss rate of %.4f%%. As of the end of data recording on that day, the test interval was %d minutes and each test attempted to transmit %d packets.
 
-<p>Overall statistics for all ping tests:</p>
+### Overall statistics for all ping tests:
+
 <dl>
 <dt>min</dt><dd>%.4f</dd>
 <dt>avg</dt><dd>%.4f</dd>
@@ -138,39 +149,40 @@ def daily_summary(data):
     )
 
 def problem_log(data):
-    """Returns an HTML fragment detailing the usability events logged in DATA."""
-    ret = """<p>There were %d network usability events:</p>
-<ul>
-<li>%d events at level 2</li>
-<li>%d events at level 3</li>
-<li>%d events at level 4</li>
-<li>%d events at level 5</li>
-</ul>
+    """Returns a markdown fragment detailing the usability events logged in DATA."""
+    ret = """There were %d network usability events:
 
-<h3>Entire log</h3>
+* %d events at level 2
+* %d events at level 3
+* %d events at level 4
+* %d events at level 5
 
-<p>Here follows a list of all logged problems. Note that failures to log are not reported; currently,
+### Entire log
+
+Here follows a list of all logged problems. Note that failures to log are not reported; currently,
 there are several known reasons why logging fails occasionally. Even worse, the only way to detect these problems at
 present is to inspect the raw (binary) log files by reading them with the <code>pickle</code> module in Python 3.5+.
 Too, logging often begins and ends abruptly because development is still occurring. This also means that the exact
-data format written to the raw files still changes occasionally.</p>
-<p>All of this is to say that this log file is still documenting an experimental system; part of the aim of this
+data format written to the raw files still changes occasionally.
+
+All of this is to say that this log file is still documenting an experimental system; part of the aim of this
 particular log file that you are reading right now is to help increase the stability of that system. The above
-disclaimers will gradually disappear or be rewritten as the system approaches a more finalized form.</p>
-""" % (len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 2]),
-       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 3]),
-       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 4]),
-       len([dict(i) for i in data['usability events'].values() if i['worst_problem'] == 5]),
-       len(data['usability events']),
+disclaimers will gradually disappear or be rewritten as the system approaches a more finalized form.
+""" % (len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 2]),
+       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 3]),
+       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 4]),
+       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 5]),
+       len(data['usability_events']),
        )
-    if 'usability events' in data:
+    if 'usability_events' in data:
         ret += "\n<ul>\n"
-        for timestamp, event_data in data['usability events'].items():
+        for timestamp, event_data in data['usability_events'].items():
             ret += "<li><strong>%s</strong> (problem level %d):\n <ul>\n" % (timestamp, event_data['worst_problem'])
-            if 'tests_failed' in event_data:
+            try:
                 for test in event_data['tests_failed']:
-                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test_failed'], "; ".join(["%s=%s" % (label, value) for label, value in test['relevant_data'].items()]))
-            else:
+                    ret += "  <li>Failed test: %s (%s)</li>\n" % (test['test_failed'], "; ".join(["%s=%s" % (label,
+                                                                                                           value) for label, value in test['relevant_data'].items()]))
+            except BaseException:
                 log_it("WARNING: apparently, no tests were failed here. What's going on?", 1)
             ret += " </ul>\n</li>\n"
         ret += "</ul>"
@@ -187,7 +199,7 @@ def ping_rules_description():
     """Returns a description of the rules currently used to check ping transcripts."""
     ret = "<ul>\n%s\n</ul>" % '\n'.join([' <li>%s (level %s): <i><code>%s</code></i>.</li>' % (i['test_name'], i['problem_level'],
                                           single_rule_description(i['test'])) for i in usability_tests])
-    ret += "\n<p>Another rule that is always applied: if <code>ping</code> fails with a DNS lookup failure (or for any other reason), this is considered to be a <strong>level 5</strong> usability event.</p>"
+    ret += "\nAnother rule that is always applied: if <code>ping</code> fails with a DNS lookup failure (or for any other reason), this is considered to be a **level 5** usability event."
     return ret
 
 def produce_daily_report(datafile):
@@ -196,18 +208,18 @@ def produce_daily_report(datafile):
     """
     with open(datafile, mode="rb") as data_store:
         daily_data = pickle.load(data_store)
-    report = daily_report_template() % (datetime.datetime.now().isoformat(),
-                                        os.path.basename(datafile).rstrip('.pkl'),
+    # date on which data was collected; overall summary; usability problem log, description of ping rules
+    report = daily_report_template() % (os.path.basename(datafile).rstrip('.pkl'),
                                         daily_summary(daily_data),
                                         problem_log(daily_data),
                                         ping_rules_description(),
                                         )
-    with open(os.path.join(reports_location, os.path.basename(datafile).rstrip('.pkl')+'.html'), mode="w") as output_file:
+    with open(os.path.join(reports_location, os.path.basename(datafile).rstrip('.pkl')+'.md'), mode="w") as output_file:
         output_file.write(report)
 
 
 if __name__ == "__main__":
     # Run directly from the command line? Run through basic activities as a self-test.
-    # most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-22.pkl'
+    most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
+    # most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-26.pkl'
     produce_daily_report(most_recent_report)
