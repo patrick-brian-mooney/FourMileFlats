@@ -215,13 +215,17 @@ def record_and_interpret(timestamp, ping_transcript):
             if "net unreachable" in the_line:
                 event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
             else:
-                data['return_packet_size'], the_line = the_line.strip().split('bytes from')
-                data['host ID (reverse DNS?)'], the_line = the_line.split('(')
-                _, the_line = the_line.split(':')               # Drop the IP address, which we've already seen anyway.`
-                icmp, ttl, time, _ = the_line.strip().split(' ')
-                event['icmp_seq'] = icmp.split('=')[1].strip()
-                data['ttl'] = ttl.split('=')[1].strip()
-                event['time'] = time.split('=')[1].strip()
+                try:
+                    data['return_packet_size'], the_line = the_line.strip().split('bytes from')
+                    data['host ID (reverse DNS?)'], the_line = the_line.split('(')
+                    _, the_line = the_line.split(':')               # Drop the IP address, which we've already seen anyway.`
+                    icmp, ttl, time, _ = the_line.strip().split(' ')
+                    event['icmp_seq'] = icmp.split('=')[1].strip()
+                    data['ttl'] = ttl.split('=')[1].strip()
+                    event['time'] = time.split('=')[1].strip()
+                except BaseException:
+                    log_it("WARNING: unable to parse the ping transcript line: %s; halting instead of trying to parse the phrase: %s" % (l, the_line))
+                    event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
             data['log'] += [event]
     for k in data:                              # Clean up leading and trailing whitespace in the data.
         if type(data[k]) == type('string'):
