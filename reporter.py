@@ -127,9 +127,14 @@ def daily_report_template():
 def daily_summary(data):
     """Returns an overall summary for the day's performance."""
     trans, rec = data['packets_transmitted_today'], data['packets_received_today']
-    all_pings = []
+    all_pings = [][:]
     for i in data['ping_transcripts']:
-        all_pings += [float(n['time']) for n in data['ping_transcripts'][i]['log']]
+        if 'log' in data['ping_transcripts'][i]:
+            for n in data['ping_transcripts'][i]['log']:
+                try:
+                    all_pings += [ float(n['time']) ]
+                except KeyError:
+                    pass            # If we didn't record it, don't count it toward the average calculation. Probably there was a DNS lookup failure or such.
     drop_pct = 100 * ((trans-rec)/trans) if (trans > 0) else 0
     return """Today, <code>network-monitor</code> transmitted %d and received %d packets; that's an overall packet loss rate of %.4f%%. As of the end of data recording on that day, the test interval was %d minutes and each test attempted to transmit %d packets.
 

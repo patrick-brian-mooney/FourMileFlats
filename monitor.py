@@ -67,7 +67,7 @@ def create_data_store():
 def get_data_store(which_store=None, second_try=False):
     """Private function to get an entire stored data dictionary. If the data
     storage dictionary cannot be read, create a new dictionary with default
-    values. If WHICH_STORE is None, then it returns data frp, the current data
+    values. If WHICH_STORE is None, then it returns data from the current data
     store; otherwise, it returns the data from the store specified by WHICH_STORE.
 
     Returns a dictionary containing all of the stored data from the specified
@@ -144,7 +144,11 @@ def interpret(data, timestamp):
     """
     failed_test_data = collections.OrderedDict({'worst_problem': 0, 'tests_failed': [][:]})
     for test in reporter.usability_tests:
-        if test['test'](data):          # Tests return True if they fail, i.e. if there's a usability problem
+        try:
+            result = test['test'](data)
+        except BaseException:
+            result = False                  # If we can't even run the test, a usability problem has already been reported
+        if result:          # Tests return True if they fail, i.e. if there's a usability problem
             current_failure = collections.OrderedDict({'test_failed': test['test_name']})  # So log the event and its relevant data
             current_failure['relevant_data'] = {}.copy()
             current_failure['problem_level'] = test['problem_level']
