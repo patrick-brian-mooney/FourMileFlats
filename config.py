@@ -13,6 +13,8 @@ ping_count_flag = "-c %d"   # The flag to supply to tell the PING executable how
                             # after it so the number of attempts can be substituted in.
 ping_version_flag = "-V"    # What flag do we pass to the PING executable to get its version string from it?
 
+traceroute_exec = "/usr/sbin/traceroute"    # Full path to TRACEROUTE executable.
+
 # Who, how often, and how long to ping
 ping_target = "google.com"  # Which host to ping?
 interval_between_pings = 5  # Number of minutes between the beginning of one check and the beginning of the next

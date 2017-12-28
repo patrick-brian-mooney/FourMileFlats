@@ -92,7 +92,10 @@ def add_data_entry(category, time, data):
     function adds an entry to one of those logs.
 
     CATEGORY is the key name in the global data store that stores an event log;
-        currently, valid choices are 'ping_transcripts' and 'usability_events'.
+        currently, valid choices are:
+          'ping_transcripts'
+          'traceroute_transcripts'
+          'usability_events'
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
     DATA is the data to store for the event. Each CATEGORY has its own DATA format:
@@ -132,6 +135,11 @@ def check_ping_config():
     except BaseException as e:
         report_ping_error(error=e)
 
+def record_traceroute():
+    """Record a traceroute transcript in the log."""
+    status, output = subprocess.getstatusoutput("%s %s" % (traceroute_exec, ping_target))
+    add_data_entry('traceroute_transcripts', current_timestamp(), {'status': status, 'transcript': output})
+
 def startup():
     """Execute necessary startup tasks."""
     check_ping_config()
@@ -163,11 +171,12 @@ def interpret(data, timestamp):
             pruned_data = collections.OrderedDict()
             groups_failed = set([ i['test_group'] for i in failed_test_data['tests_failed'] ])
             for problem in groups_failed:
-                worst_version = max([test[''] for test in groups_failed])
+                worst_version = max([ test['problem_level'] for test in failed_test_data['tests_failed'] if test['test_group']==problem])
 
 
             # Now, add the entry
             add_data_entry('usability_events', timestamp, pruned_data)
+            record_traceroute()
     except KeyError:
         pass            # Didn't fail ANY tests? move along.
 
@@ -182,7 +191,8 @@ def record_and_interpret(timestamp, ping_transcript):
     data = dict([])
     log_it("INFO: we're recording a ping transcript from %s" % timestamp, 2)
     log_it("      transcript follows:\n\n%s\n\n" % ping_transcript, 3)
-    if "failure in name" in ping_transcript.lower():    # We're trying to match "temporary failure in name resolution"
+    t = ping_transcript.lower()
+    if "failure in name" in t or "net unreachable" in t:
         data['transcript'] = ping_transcript
     else:
         lines = ping_transcript.strip().split('\n')
