@@ -160,9 +160,14 @@ def interpret(data, timestamp):
     try:
         if failed_test_data['worst_problem'] >= 2:          # We only log usability problem events when they impact use.
             # First, prune the data so only the worst experienced version of each problem category remains
+            pruned_data = collections.OrderedDict()
+            groups_failed = set([ i['test_group'] for i in failed_test_data['tests_failed'] ])
+            for problem in groups_failed:
+                worst_version = max([test[''] for test in groups_failed])
+
 
             # Now, add the entry
-            add_data_entry('usability_events', timestamp, failed_test_data)
+            add_data_entry('usability_events', timestamp, pruned_data)
     except KeyError:
         pass            # Didn't fail ANY tests? move along.
 
@@ -177,7 +182,7 @@ def record_and_interpret(timestamp, ping_transcript):
     data = dict([])
     log_it("INFO: we're recording a ping transcript from %s" % timestamp, 2)
     log_it("      transcript follows:\n\n%s\n\n" % ping_transcript, 3)
-    if "failure in name" in ping_transcript.lower():
+    if "failure in name" in ping_transcript.lower():    # We're trying to match "temporary failure in name resolution"
         data['transcript'] = ping_transcript
     else:
         lines = ping_transcript.strip().split('\n')
