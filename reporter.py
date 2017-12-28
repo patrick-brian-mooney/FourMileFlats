@@ -216,7 +216,7 @@ def produce_daily_report(datafile):
                                         daily_summary(daily_data),
                                         problem_log(daily_data),
                                         ping_rules_description(),
-                                        )
+                                       )
     with open(os.path.join(reports_location, os.path.basename(datafile).rstrip('.pkl')+'.md'), mode="w") as output_file:
         output_file.write(report)
 
