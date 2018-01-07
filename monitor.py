@@ -31,7 +31,7 @@ def _current_date():
     """Convenience function: return the current date in a canonical format, to be used
     in a filename.
     """
-    return datetime.datetime.now().strftime ("%Y-%m-%d")
+    return datetime.datetime.now().strftime('%Y/%m/%Y-%m-%d')
 
 def current_data_store_name():
     """Convenience function: return the name of the data store we're supposed to be
@@ -46,22 +46,25 @@ def get_ping_version():
     """Ask the PING executable what its version is."""
     return subprocess.check_output('%s %s' % (ping_exec, ping_version_flag), shell=True).decode().strip()
 
-def create_data_store():
-    """Create a new data store for the current day. This should only be called when
+def create_data_store(which_store=None):
+    """Create a new data store for the specified day. This should only be called when
     there is no existing data store for the current date; if it's ever called when
     that's not the case, it will happily overwrite the existing data store with a
     new blank one.
     """
+    if which_store == None:
+        which_store = current_data_store_name()
     default_data = collections.OrderedDict({'purpose of this file': 'data store for network test at %s on %s' % (situation, _current_date()),
                                             'script URL': 'https://github.com/patrick-brian-mooney/network-reporter',
                                             'script author twitter ID': '@patrick_mooney',
                                             'packets_transmitted_today': 0,
                                             'packets_received_today': 0,
-                                            'ping_transcripts': OrderedDict({}),
-                                            'usability_events': OrderedDict({}),
+                                            'ping_transcripts': OrderedDict(),
+                                            'traceroute_transcripts': OrderedDict(),
+                                            'usability_events': OrderedDict(),
                                             'ping version': get_ping_version(),
                                             })
-    with open(current_data_store_name(), 'wb') as the_data_file:
+    with open(which_store, 'wb') as the_data_file:
         pickle.dump(default_data, file=the_data_file, protocol=-1)
 
 def get_data_store(which_store=None, second_try=False):
@@ -78,12 +81,12 @@ def get_data_store(which_store=None, second_try=False):
     try:
         with open(which_store, 'rb') as the_data_file:
             return pickle.load(the_data_file)
-    except Exception:
+    except Exception as e:
         if second_try:
             log_it("FATAL ERROR: unable to create a readable data store; quitting ...", 0)
             os.exit()
         else:
-            log_it('WARNING: Data store does not exist or cannot be read; creating new data store ...')
+            log_it('WARNING: Data store does not exist or cannot be read (the system said: %s); creating new data store ...' % e)
             create_data_store()
             return get_data_store(second_try=True)
 
@@ -92,17 +95,19 @@ def add_data_entry(category, time, data):
     function adds an entry to one of those logs.
 
     CATEGORY is the key name in the global data store that stores an event log;
-        currently, valid choices are:
-          'ping_transcripts'
-          'traceroute_transcripts'
-          'usability_events'
+        valid choices are specified below.
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
     DATA is the data to store for the event. Each CATEGORY has its own DATA format:
 
     Returns NONE.
     """
+    valid_categories = ['ping_transcripts', 'traceroute_transcripts', 'usability_events']
+    assert data, "ERROR: record_data_entry(): attempt to store blank data in category %s" % category
+    assert category in valid_categories, "ERROR: attempt to add data to unknown category %s" % category
     daily_data = get_data_store()
+    if category not in daily_data:
+        daily_data[category] = OrderedDict()
     daily_data[category][time] = data
 
     # Handling for special-casing of monitored and calculated values happens below.
@@ -140,9 +145,29 @@ def record_traceroute():
     status, output = subprocess.getstatusoutput("%s %s" % (traceroute_exec, ping_target))
     add_data_entry('traceroute_transcripts', current_timestamp(), {'status': status, 'transcript': output})
 
+def schedule_report_creation(data_file):
+    """Schedule the postprocessing of a data file. Since data files are for particular
+    days, this postprocessing should happen a few minutes after midnight. When it
+    runs, it waits for the data file to stop changing, then produces a report for
+    that data file. This procedure is intended to be started as a thread.
+    
+    #FIXME: makes a number of assumptions about timing that should be checked and
+    might need to be adjusted.
+    """
+    s = datetime.datetime.replace(datetime.datetime.now() + datetime.timedelta(days=1), hour=0, minute=10, second=0) - datetime.datetime.now()
+    time.sleep(s.seconds)           # Sleep until 12:10 a.m.
+    old_time, new_time = 0, os.stat(data_file).st_mtime
+    while old_time != new_time:     # Wait until it's unchanged for five minutes
+        time.sleep(300)
+        old_time, new_time = new_time, os.stat(filename).st_mtime
+    reporter.produce_daily_report(data_file)
+    # Great! We've produced the report for yesterday's data. Let's schedule the reporting of today's data for tomorrow before the thread terminates. 
+    _thread.start_new_thread(schedule_report_creation, (current_data_store_name(),))
+    
 def startup():
     """Execute necessary startup tasks."""
     check_ping_config()
+    _thread.start_new_thread(schedule_report_creation, (current_data_store_name(),))
     log_it("INFO: startup tasks complete", 3)
 
 def interpret(data, timestamp):
@@ -168,14 +193,15 @@ def interpret(data, timestamp):
     try:
         if failed_test_data['worst_problem'] >= 2:          # We only log usability problem events when they impact use.
             # First, prune the data so only the worst experienced version of each problem category remains
-            pruned_data = collections.OrderedDict()
+            pruned_data = [][:]
             groups_failed = set([ i['test_group'] for i in failed_test_data['tests_failed'] ])
             for problem in groups_failed:
                 worst_version = max([ test['problem_level'] for test in failed_test_data['tests_failed'] if test['test_group']==problem])
-
-
+                pruned_data += [f for f in failed_test_data['tests_failed'] if (f['test_group'] == problem and f['problem_level'] == worst_version)]
+            failed_test_data['tests_failed'] = pruned_data
             # Now, add the entry
-            add_data_entry('usability_events', timestamp, pruned_data)
+            add_data_entry('usability_events', timestamp, failed_test_data)
+            # add_data_entry('usability_events', timestamp, pruned_data)
             record_traceroute()
     except KeyError:
         pass            # Didn't fail ANY tests? move along.
@@ -238,7 +264,7 @@ def record_and_interpret(timestamp, ping_transcript):
                     event['icmp_seq'] = icmp.split('=')[1].strip()
                     data['ttl'] = ttl.split('=')[1].strip()
                     event['time'] = time.split('=')[1].strip()
-                except BaseException:
+                except BaseException as e:
                     log_it("WARNING: unable to parse the ping transcript line: %s; halting instead of trying to parse the phrase: %s" % (l, the_line))
                     event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
             data['log'] += [event]
@@ -258,7 +284,7 @@ def ping_test():
                                           'relevant_data': {'status_code': status},
                                           'problem_level': 5,
                                           'test_group': 'ping failure' }, ]
-        if len(output) < 512:
+        if len(output) <= 512:
             failure_data['tests_failed'][0]['relevant_data']['transcript'] = output
         add_data_entry('usability_events', current_timestamp(), failure_data)
     return output

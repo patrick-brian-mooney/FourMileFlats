@@ -118,10 +118,14 @@ def daily_report_template():
 
 %s
 
+## Traceroute data
+
+%s
+
 ## Tests applied to ping transcripts
 
 %s
-"""  # Substitute in: date on which data was collected; overall summary; usability problem log, description of ping rules
+"""  # Substitute in: date on which data was collected; overall summary; usability problem log, traceroute verbiage, description of ping rules
     return ret
 
 def daily_summary(data):
@@ -205,6 +209,33 @@ def ping_rules_description():
     ret += "\nAnother rule that is always applied: if <code>ping</code> fails with a DNS lookup failure (or for any other reason), this is considered to be a **level 5** usability event."
     return ret
 
+def traceroute_report(data, date):
+    """Generates a report for any traceroute logs that were collected during the day.
+    These logs are generated when a network usability event is detected and are
+    dumped into a separate file. If any traceroute reports are generated, this
+    function returns the filesystem path to the dumped report; otherwise it returns
+    None.
+    """
+    if 'traceroute_transcripts' in data:
+        report = """#Traceroute Report for""" + date + '\n\n'
+        for e in data['traceroute_transcripts']:
+            report += "##%s\n\n" % e
+            report += "<p><pre><samp>" + data['traceroute_transcripts'][e]['transcript'] + "</samp></pre></p>\n\n"
+        report_path = os.path.join(reports_location, datetime.datetime.now().strftime('%Y/%m'), date + "-traceroute.md")
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)     # Ensure report directory exists
+        with open(report_path, mode="w") as report_file:
+            report_file.write(report)
+        return report_path
+    return None
+
+def traceroute_verbiage(datafile, data):
+    traceroute_path = traceroute_report(data, os.path.basename(datafile).rstrip('.pkl'))
+    if traceroute_path:
+        return """<a href="%s">Traceroute logs</a> were generated for this date.\n\n""" % traceroute_path
+    else:
+        return """No traceroute data was collected for this date. It could be that there were no network problems on this date, or it's possible that network-reporter is malfunctioning, or maybe this report is being generated from a datafile that was created before traceroute logging began.\n\n"""
+
+
 def produce_daily_report(datafile):
     """Produces an HTML report summarizing the day's activity. Stores it in the
     appropriate part of the local filesystem.
@@ -215,14 +246,16 @@ def produce_daily_report(datafile):
     report = daily_report_template() % (os.path.basename(datafile).rstrip('.pkl'),
                                         daily_summary(daily_data),
                                         problem_log(daily_data),
+                                        traceroute_verbiage(datafile, daily_data),
                                         ping_rules_description(),
                                        )
-    with open(os.path.join(reports_location, os.path.basename(datafile).rstrip('.pkl')+'.md'), mode="w") as output_file:
+    report_loc = os.path.join(reports_location, datetime.datetime.now().strftime('%Y/%m'), os.path.basename(datafile).rstrip('.pkl')+'.md')
+    os.makedirs(os.path.dirname(report_loc), exist_ok=True)     # Ensure report directory exists
+    with open(report_loc, mode="w") as output_file:
         output_file.write(report)
 
 
 if __name__ == "__main__":
-    # Run directly from the command line? Run through basic activities as a self-test.
     most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    # most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-26.pkl'
+    # most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-29.pkl'
     produce_daily_report(most_recent_report)
