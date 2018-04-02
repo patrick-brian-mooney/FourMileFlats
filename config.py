@@ -36,6 +36,6 @@ network_problem_levels = {
     1: "minor problems, probably only noticeable to gamers",
     2: "network is usable, but is slow",
     3: "network is barely usable, and even simple tasks require a great deal of user patience",
-    4: "network is essentially unusable, though it might be possible to load a web page with multiple retries",
+    4: "network is essentially unusable, though it might occasionally be possible to get something done with multiple retries",
     5: "network is completely unusable"
 }

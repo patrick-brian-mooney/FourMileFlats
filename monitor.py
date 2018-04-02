@@ -64,6 +64,7 @@ def create_data_store(which_store=None):
                                             'usability_events': OrderedDict(),
                                             'ping version': get_ping_version(),
                                             })
+    os.makedirs(os.path.dirname(which_store), exist_OK=True)            # Ensure that target data-storage directory exists.    
     with open(which_store, 'wb') as the_data_file:
         pickle.dump(default_data, file=the_data_file, protocol=-1)
 
@@ -145,29 +146,39 @@ def record_traceroute():
     status, output = subprocess.getstatusoutput("%s %s" % (traceroute_exec, ping_target))
     add_data_entry('traceroute_transcripts', current_timestamp(), {'status': status, 'transcript': output})
 
-def schedule_report_creation(data_file):
+def schedule_daily_report_creation(data_file):
     """Schedule the postprocessing of a data file. Since data files are for particular
     days, this postprocessing should happen a few minutes after midnight. When it
     runs, it waits for the data file to stop changing, then produces a report for
     that data file. This procedure is intended to be started as a thread.
-    
+
     #FIXME: makes a number of assumptions about timing that should be checked and
     might need to be adjusted.
+    #FIXME: if the program is killed after midnight, but before the report is
+    generated, this thread will also be killed, so the report will never be
+    produced in the first place; and the program, on restarting, will happily
+    ignore the fact that a report was never produced for the previous day. In fact,
+    the program makes no effort to notice if there are missing reports. Any
+    missing reports can always be generated manually by importing reporter.py in a
+    Python 3 console and using its functions to create the report, of course.
     """
     s = datetime.datetime.replace(datetime.datetime.now() + datetime.timedelta(days=1), hour=0, minute=10, second=0) - datetime.datetime.now()
     time.sleep(s.seconds)           # Sleep until 12:10 a.m.
     old_time, new_time = 0, os.stat(data_file).st_mtime
     while old_time != new_time:     # Wait until it's unchanged for five minutes
         time.sleep(300)
-        old_time, new_time = new_time, os.stat(filename).st_mtime
+        old_time, new_time = new_time, os.stat(data_file).st_mtime
     reporter.produce_daily_report(data_file)
-    # Great! We've produced the report for yesterday's data. Let's schedule the reporting of today's data for tomorrow before the thread terminates. 
-    _thread.start_new_thread(schedule_report_creation, (current_data_store_name(),))
-    
+    # Great! We've produced the report for yesterday's data. Let's schedule the reporting of today's data for tomorrow before the thread terminates.
+    _thread.start_new_thread(schedule_daily_report_creation, (current_data_store_name(),))
+
+def schedule_monthly_report_creation(data_folder_path):
+    pass
+
 def startup():
     """Execute necessary startup tasks."""
     check_ping_config()
-    _thread.start_new_thread(schedule_report_creation, (current_data_store_name(),))
+    _thread.start_new_thread(schedule_daily_report_creation, (current_data_store_name(),))
     log_it("INFO: startup tasks complete", 3)
 
 def interpret(data, timestamp):
