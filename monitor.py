@@ -64,7 +64,7 @@ def create_data_store(which_store=None):
                                             'usability_events': OrderedDict(),
                                             'ping version': get_ping_version(),
                                             })
-    os.makedirs(os.path.dirname(which_store), exist_OK=True)            # Ensure that target data-storage directory exists.    
+    os.makedirs(os.path.dirname(which_store), exist_ok=True)            # Ensure that target data-storage directory exists.
     with open(which_store, 'wb') as the_data_file:
         pickle.dump(default_data, file=the_data_file, protocol=-1)
 
@@ -99,7 +99,7 @@ def add_data_entry(category, time, data):
         valid choices are specified below.
     TIME is the time the event is logged. This is the key name used to index the
         dictionary stored in the CATEGORY specified.
-    DATA is the data to store for the event. Each CATEGORY has its own DATA format:
+    DATA is the data to store for the event. Each CATEGORY has its own DATA format.
 
     Returns NONE.
     """
@@ -225,60 +225,66 @@ def record_and_interpret(timestamp, ping_transcript):
     by the PING command. For reference, this script was developed with Linux ping
     included with iputils-s20121221.
     """
-    data = dict([])
+    data = dict()
     log_it("INFO: we're recording a ping transcript from %s" % timestamp, 2)
     log_it("      transcript follows:\n\n%s\n\n" % ping_transcript, 3)
     t = ping_transcript.lower()
     if "failure in name" in t or "net unreachable" in t:
         data['transcript'] = ping_transcript
+    elif len(t.split()) < 1:
+        pass
     else:
-        lines = ping_transcript.strip().split('\n')
-        header = lines.pop(0).rstrip('bytes of data.')          # Read the first line in the ping_transcript
-        # Current format is: PING google.com (172.217.1.206) 56(84) bytes of data.
-        data['executable_name'], data['hostname'], data['host_IP'], data['bytes'] = header.strip().split(' ')
-        # Next, gather data from the last line from the file
-        trailer = lines.pop().lstrip('rtt').strip()
-        label, trailer = trailer.split('=')
-        if ',' in trailer:
-            stats, data['pipe_num'] = trailer.split(',')
-        else:
-            stats = trailer.strip()
-        data.update(dict(zip(label.strip().split('/'), stats.strip().split('/'))))
-        # Now, gather data from the last remaining line that hasn't already been processed
-        trailer = lines.pop().strip()
-        errors_pos = trailer.find("errors")
-        if errors_pos != -1:
-            log_it("WARNING: network errors detected; we may be about to crash")
-        data['packets_transmitted'], trailer = trailer.split('packets transmitted,')
-        data['received'], trailer = trailer.split(' received,')
-        if trailer.strip().startswith('+') and "errors" in trailer:
-            errors, trailer = trailer.split('errors, ')
-            data['errors'] = errors.strip().lstrip('+').strip()
-        data['packet_loss'], trailer = trailer.split('packet loss,')
-        data['time'] = trailer.split('time')[1]
-        # The last remaining line is purely cosmetic: pop it and ignore it
-        _ = lines.pop()
-        # Streamline the rest of the ping_transcript, then process it line by line
-        lines = [ l.strip()+'\n' for l in lines if len(l.strip()) > 0 and not l.strip().startswith('---') ]
-        data['log'] = [][:]
-        for l in lines:
-            event=dict([])
-            the_line = l[:]
-            if "net unreachable" in the_line:
-                event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
+        try:
+            lines = ping_transcript.strip().split('\n')
+            header = lines.pop(0).rstrip('bytes of data.')          # Read the first line in the ping_transcript
+            # Current format is: PING google.com (172.217.1.206) 56(84) bytes of data.
+            data['executable_name'], data['hostname'], data['host_IP'], data['bytes'] = header.strip().split(' ')
+            # Next, gather data from the last line from the file
+            trailer = lines.pop().lstrip('rtt').strip()
+            label, trailer = trailer.split('=')
+            if ',' in trailer:
+                stats, data['pipe_num'] = trailer.split(',')
             else:
-                try:
-                    data['return_packet_size'], the_line = the_line.strip().split('bytes from')
-                    data['host ID (reverse DNS?)'], the_line = the_line.split('(')
-                    _, the_line = the_line.split(':')               # Drop the IP address, which we've already seen anyway.`
-                    icmp, ttl, time, _ = the_line.strip().split(' ')
-                    event['icmp_seq'] = icmp.split('=')[1].strip()
-                    data['ttl'] = ttl.split('=')[1].strip()
-                    event['time'] = time.split('=')[1].strip()
-                except BaseException as e:
-                    log_it("WARNING: unable to parse the ping transcript line: %s; halting instead of trying to parse the phrase: %s" % (l, the_line))
+                stats = trailer.strip()
+            data.update(dict(zip(label.strip().split('/'), stats.strip().split('/'))))
+            # Now, gather data from the last remaining line that hasn't already been processed
+            trailer = lines.pop().strip()
+            errors_pos = trailer.find("errors")
+            if errors_pos != -1:
+                log_it("WARNING: network errors detected; we may be about to crash")
+            data['packets_transmitted'], trailer = trailer.split('packets transmitted,')
+            data['received'], trailer = trailer.split(' received,')
+            if trailer.strip().startswith('+') and "errors" in trailer:
+                errors, trailer = trailer.split('errors, ')
+                data['errors'] = errors.strip().lstrip('+').strip()
+            data['packet_loss'], trailer = trailer.split('packet loss,')
+            data['time'] = trailer.split('time')[1]
+            # The last remaining line is purely cosmetic: pop it and ignore it
+            _ = lines.pop()
+            # Streamline the rest of the ping_transcript, then process it line by line
+            lines = [ l.strip()+'\n' for l in lines if len(l.strip()) > 0 and not l.strip().startswith('---') ]
+            data['log'] = [][:]
+            for l in lines:
+                event=dict([])
+                the_line = l[:]
+                if "net unreachable" in the_line:
                     event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
-            data['log'] += [event]
+                else:
+                    try:
+                        data['return_packet_size'], the_line = the_line.strip().split('bytes from')
+                        data['host ID (reverse DNS?)'], the_line = the_line.split('(')
+                        _, the_line = the_line.split(':')               # Drop the IP address, which we've already seen anyway.`
+                        icmp, ttl, time, _ = the_line.strip().split(' ')
+                        event['icmp_seq'] = icmp.split('=')[1].strip()
+                        data['ttl'] = ttl.split('=')[1].strip()
+                        event['time'] = time.split('=')[1].strip()
+                    except BaseException as e:
+                        log_it("WARNING: unable to parse the ping transcript line: %s; halting instead of trying to parse the phrase: %s" % (l, the_line))
+                        event = {'icmp_seq': 1 + len(data['log']), 'transcript': the_line}
+                data['log'] += [event]
+        except Exception as err:
+            data['transcript'] = ping_transcript
+            data['err'] = str(err)
     for k in data:                              # Clean up leading and trailing whitespace in the data.
         if type(data[k]) == type('string'):
             data[k] = data[k].strip()
@@ -290,11 +296,12 @@ def ping_test():
     """
     status, output = subprocess.getstatusoutput("%s %s %s" % (ping_exec, ping_count_flag % number_of_packets, ping_target))
     if status:      # Non-zero exit code means we couldn't ping. Log it as a serious error.
-        failure_data = OrderedDict({'worst_problem': 5 })
-        failure_data['tests_failed'] = [ {'test_failed': 'PING returned non-zero exit status',
-                                          'relevant_data': {'status_code': status},
-                                          'problem_level': 5,
-                                          'test_group': 'ping failure' }, ]
+        failure_data = OrderedDict({'worst_problem': 5,
+                                    'tests_failed' : [ {'test_failed': 'PING returned non-zero exit status',
+                                                        'relevant_data': {'status_code': status},
+                                                                          'problem_level': 5,
+                                                                          'test_group': 'ping failure',}, 
+                                                      ]})
         if len(output) <= 512:
             failure_data['tests_failed'][0]['relevant_data']['transcript'] = output
         add_data_entry('usability_events', current_timestamp(), failure_data)
