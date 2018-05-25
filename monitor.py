@@ -301,7 +301,8 @@ def ping_test():
                                                         'relevant_data': {'status_code': status},
                                                                           'problem_level': 5,
                                                                           'test_group': 'ping failure',}, 
-                                                      ]})
+                                                      ]
+                                    })
         if len(output) <= 512:
             failure_data['tests_failed'][0]['relevant_data']['transcript'] = output
         add_data_entry('usability_events', current_timestamp(), failure_data)
