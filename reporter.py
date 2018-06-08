@@ -256,5 +256,5 @@ def produce_daily_report(datafile):
 
 if __name__ == "__main__":
     # most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2018/01/2018-01-01.pkl'
-    produce_daily_report(most_recent_report)
+    for d in glob.glob("""/home/patrick/Documents/programming/python_projects/network-reporter/data/2017/12/*pkl"""):
+        produce_daily_report(d)
