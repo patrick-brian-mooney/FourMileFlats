@@ -17,7 +17,7 @@ from patrick_logger import log_it
 
 # Once all of the usability tests have been run, the overall network problem score is the largest problem score
 # assigned by any test that the ping transcript has failed. (The operating theory here is we should be recording the
-# level of the problem that has the biggest impact on usability.
+# level of the problem that has the biggest impact on usability.)
 
 usability_tests = [
     {'test_name': 'Packet loss at least 1%',
@@ -256,6 +256,6 @@ def produce_daily_report(datafile):
 
 
 if __name__ == "__main__":
-    most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    # most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-29.pkl'
+    # most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
+    most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-29.pkl'
     produce_daily_report(most_recent_report)

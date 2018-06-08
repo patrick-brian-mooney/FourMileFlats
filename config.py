@@ -28,7 +28,7 @@ data_location = "data/"                                             # Where are 
 reports_location = "reports/"                                       # Reports are kept here, in subfolders organized year/month/
 
 
-# When the  series of tests is run on ping transcripts; each test looks for specific problems in the DATA passed to it
+# When the  series of tests is run on ping transcripts, each test looks for specific problems in the DATA passed to it
 # and, if it finds problems, determines how bad the problem is and assigns a score based on the seriousness of the
 # problem. Currently defined problem level scores are:
 network_problem_levels = {
