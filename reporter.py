@@ -159,6 +159,10 @@ def daily_summary(data):
 
 def problem_log(data):
     """Returns a markdown fragment detailing the usability events logged in DATA."""
+    probs = dict()
+    for p_level in range(2,6):
+        probs[p_level] = [dict(i) for i in data['usability_events'].values() if i['worst_problem'] == p_level]
+
     ret = """There were %d network usability events:
 
 * %d events at level 2
@@ -177,12 +181,7 @@ data format written to the raw files still changes occasionally.
 All of this is to say that this log file is still documenting an experimental system; part of the aim of this
 particular log file that you are reading right now is to help increase the stability of that system. The above
 disclaimers will gradually disappear or be rewritten as the system approaches a more finalized form.
-""" % (len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 2]),
-       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 3]),
-       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 4]),
-       len([dict(i) for i in data['usability_events'].values() if i['worst_problem'] == 5]),
-       len(data['usability_events']),
-       )
+""" % (len(data['usability_events']), len(probs[2]), len(probs[3]), len(probs[4]), len(probs[5]))
     if 'usability_events' in data:
         ret += "\n<ul>\n"
         for timestamp, event_data in data['usability_events'].items():
@@ -257,5 +256,5 @@ def produce_daily_report(datafile):
 
 if __name__ == "__main__":
     # most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2017-12-29.pkl'
+    most_recent_report = '/home/patrick/Documents/programming/python_projects/network-reporter/data/2018/01/2018-01-01.pkl'
     produce_daily_report(most_recent_report)
