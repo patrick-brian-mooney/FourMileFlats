@@ -12,7 +12,7 @@ general public license, either version 3 or (at your option) any later version.
 See the file LICENSE for more details.
 """
 
-import collections, datetime, os, pickle, subprocess, _thread, time
+import collections, datetime, os, pickle, random, subprocess, _thread, time
 from collections import OrderedDict
 
 from config import *        # Constants defining program operation.
@@ -300,7 +300,7 @@ def ping_test():
                                     'tests_failed' : [ {'test_failed': 'PING returned non-zero exit status',
                                                         'relevant_data': {'status_code': status},
                                                                           'problem_level': 5,
-                                                                          'test_group': 'ping failure',}, 
+                                                                          'test_group': 'ping failure',},
                                                       ]
                                     })
         if len(output) <= 512:
@@ -325,7 +325,9 @@ def monitor():
     while True:
         current_time = datetime.datetime.now()
         next_run = current_time + datetime.timedelta(minutes=interval_between_pings)    # Add interval_between_pings to current time ...
-        next_run = datetime.datetime(next_run.year, next_run.month, next_run.day, next_run.hour, next_run.minute // interval_between_pings * interval_between_pings, 0)    # ... and round down
+        next_run = datetime.datetime(next_run.year, next_run.month, next_run.day, next_run.hour, next_run.minute //
+                                     interval_between_pings * interval_between_pings, 0)    # ... and round down
+        next_run +=  datetime.timedelta(seconds=+random.randint(0, 60 * interval_between_pings - number_of_packets))
         log_it("INFO: it's %s; scheduling next ping test for %s" % (current_time.isoformat(sep=' '), next_run.isoformat(sep=' ')), 3)
         sleep_time = (next_run - current_time).total_seconds()
         _thread.start_new_thread(schedule_test, (sleep_time,))
