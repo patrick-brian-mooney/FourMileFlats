@@ -299,8 +299,8 @@ def ping_test():
         failure_data = OrderedDict({'worst_problem': 5,
                                     'tests_failed' : [ {'test_failed': 'PING returned non-zero exit status',
                                                         'relevant_data': {'status_code': status},
-                                                                          'problem_level': 5,
-                                                                          'test_group': 'ping failure',},
+                                                        'problem_level': 5,
+                                                        'test_group': 'ping failure',},
                                                       ]
                                     })
         if len(output) <= 512:
