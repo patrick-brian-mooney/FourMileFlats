@@ -40,6 +40,7 @@ def current_data_store_name():
     return os.path.join(data_location, _current_date() + ".pkl")
 
 def current_timestamp():
+    """Get a string representation of the current timestamp."""
     return datetime.datetime.now().time().strftime('%H:%M:%S')
 
 def get_ping_version():
