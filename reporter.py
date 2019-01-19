@@ -110,8 +110,7 @@ def monthly_report_template():
     """Returns a markdown template for monthly reports. The template includes %-codes
     to be filled in by the calling function.
     """
-    ret = """
-# Monthly Network Quality Summary for %s during %s
+    ret = """# Monthly Network Quality Summary for %s during %s
 
 ## Summary 
 
@@ -128,12 +127,34 @@ def tests_failed_list(daily_data_dict):
     """Returns a summary list of all tests failed during the month, organized by
     category.
     """
-    return ""       #FIXME
+    ret = ""
+    event_counts = dict()
+    for day in daily_data_dict:
+        for event in daily_data_dict[day]['usability_events']:
+            for test in daily_data_dict[day]['usability_events'][event]['tests_failed']:
+                if test['test_failed'] in event_counts:
+                    event_counts[test['test_failed']] += 1
+                else:
+                    event_counts[test['test_failed']] = 1
+    for event_type in sorted(event_counts.keys()):
+        ret += "%s: %d occurrences\n" % (event_type, event_counts[event_type])
+    ret += "\nTotal tests failed: %d\n" % sum(event_counts.values())
+    return ret
 
 
 def event_count_summary(daily_data_dict):
     """Returns a count of how many times each event level was detected."""
-    return ""       #FIXME
+    ret = ""
+    level_counts = dict()
+    for day in daily_data_dict.keys():
+        for event in daily_data_dict[day]['usability_events']:
+            if daily_data_dict[day]['usability_events'][event]['worst_problem'] in level_counts:
+                level_counts[daily_data_dict[day]['usability_events'][event]['worst_problem']] += 1
+            else:
+                level_counts[daily_data_dict[day]['usability_events'][event]['worst_problem']] = 1
+    for level in sorted(level_counts.keys()):
+        ret += "Level %s usability problems: %d\n" % (level, level_counts[level])
+    return ret
 
 
 def monthly_summary(daily_data_dict):
@@ -143,21 +164,21 @@ def monthly_summary(daily_data_dict):
     """
     total_transmitted = sum([item['packets_transmitted_today'] for item in daily_data_dict.values()])
     total_received = sum([item['packets_received_today'] for item in daily_data_dict.values()])
-    ret = """
-For this month, network-reporter has data for %d days: %s.
+    ret = """For this month, network-reporter has data for %d days: %s.
 
-During this month, network-reporter transmitted %d and received %d packets. That's an overall packet loss rate of %.2f %%.
+During this time, network-reporter transmitted %d and received %d packets. That's an overall packet loss rate of %.3f %%.
 
-Summary of tests failed:
+
+## Summary of tests failed:
 
 %s
 
-Count of event levels:
+## Count of usability events by level:
 
 %s
 """
     ret = ret % (
-        len(daily_data_dict), ', '.join([os.path.basename(item).strip().rstrip('.pkl') for item in daily_data_dict.keys()]),
+        len(daily_data_dict), ', '.join(sorted([os.path.basename(item).strip().rstrip('.pkl') for item in daily_data_dict.keys()])),
         total_transmitted, total_received, 100 * ((total_transmitted - total_received)/total_transmitted),
         tests_failed_list(daily_data_dict),
         event_count_summary(daily_data_dict),
@@ -174,7 +195,7 @@ def daily_links(daily_data_dict):
         ret = ""
         for date in sorted(daily_data_dict.keys()):
             key = os.path.basename(date).strip().rstrip('.pkl')
-            ret += "\n%s: [<code>ping</code>](%s)" % (key, key + ".md")
+            ret += "%s: [<code>ping</code>](%s)\n" % (key, key + ".md")
             if os.path.isfile(key + "-traceroute.md"):
                 ret += ", [<code>traceroute</code>(%s)" % (key + "-traceroute.md",)
         return ret
