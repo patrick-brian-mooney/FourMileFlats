@@ -23,7 +23,7 @@ number_of_packets = 100     # How many ping packets to send during each check
 # "Situation" is the location or other location-like description in which the network test is being run
 situation = "Four Mile Flats"
 
-# Locations in the local filesystem.
+# Locations relative to the project root.
 data_location = "data/"                                             # Where are we storing raw data?
 reports_location = "reports/"                                       # Reports are kept here, in subfolders organized year/month/
 

@@ -105,6 +105,104 @@ usability_tests = [
      'test_group': 'unreachable'},
 ]
 
+
+def monthly_report_template():
+    """Returns a markdown template for monthly reports. The template includes %-codes
+    to be filled in by the calling function.
+    """
+    ret = """
+# Monthly Network Quality Summary for %s during %s
+
+## Summary 
+
+%s
+
+## Daily logs
+
+%s
+""" # Substitute in: Situation; Month-Year; monthly summary data; links to daily ping and traceroute logs.
+    return ret
+
+
+def tests_failed_list(daily_data_dict):
+    """Returns a summary list of all tests failed during the month, organized by
+    category.
+    """
+    return ""       #FIXME
+
+
+def event_count_summary(daily_data_dict):
+    """Returns a count of how many times each event level was detected."""
+    return ""       #FIXME
+
+
+def monthly_summary(daily_data_dict):
+    """Produces a markdown fragment containing the summary of monthly data.
+    DAILY_DATA_DICT is of course the dictionary of pickled data that was assumbled
+    by produce_monthly_report().
+    """
+    total_transmitted = sum([item['packets_transmitted_today'] for item in daily_data_dict.values()])
+    total_received = sum([item['packets_received_today'] for item in daily_data_dict.values()])
+    ret = """
+For this month, network-reporter has data for %d days: %s.
+
+During this month, network-reporter transmitted %d and received %d packets. That's an overall packet loss rate of %.2f %%.
+
+Summary of tests failed:
+
+%s
+
+Count of event levels:
+
+%s
+"""
+    ret = ret % (
+        len(daily_data_dict), ', '.join([os.path.basename(item).strip().rstrip('.pkl') for item in daily_data_dict.keys()]),
+        total_transmitted, total_received, 100 * ((total_transmitted - total_received)/total_transmitted),
+        tests_failed_list(daily_data_dict),
+        event_count_summary(daily_data_dict),
+    )
+    return ret
+
+
+def daily_links(daily_data_dict):
+    """Returns links to the reports for individual days during the month."""
+    olddir = os.getcwd()
+    try:
+        year, month, _ = os.path.basename(list(daily_data_dict.keys())[0]).rstrip('.pkl').split('-')       # More than a little hacky.
+        os.chdir(os.path.join(reports_location, year, month))
+        ret = ""
+        for date in sorted(daily_data_dict.keys()):
+            key = os.path.basename(date).strip().rstrip('.pkl')
+            ret += "\n%s: [<code>ping</code>](%s)" % (key, key + ".md")
+            if os.path.isfile(key + "-traceroute.md"):
+                ret += ", [<code>traceroute</code>(%s)" % (key + "-traceroute.md",)
+        return ret
+    finally:
+        os.chdir(olddir)
+
+
+def produce_monthly_report(datafile_directory):
+    """Produces a markdown report summarizing the month's activity. Stores it in the
+    appropriate part of the local filesystem. DATAFILE_DIRECTORY is of course the
+    directory in which the datafiles are stored.
+    """
+    daily_data = {}.copy()                      # All of the un-pickled daily report data, by date.
+    for datafile in glob.glob(os.path.join(datafile_directory, '*pkl')):
+        with open(datafile, mode="rb") as data_store:
+            daily_data[datafile] = pickle.load(data_store)
+    # date on which data was collected; overall summary; usability problem log, description of ping rules
+    year, month, _ = os.path.basename(list(daily_data.keys())[0]).rstrip('.pkl').split('-')  # More than a little hacky.
+    report = monthly_report_template() % (situation,
+                                          year + '-' + month,
+                                          monthly_summary(daily_data),
+                                          daily_links(daily_data),
+                                          )
+    report_loc = os.path.join(reports_location, year, month, "Monthly Summary.md")
+    os.makedirs(os.path.dirname(report_loc), exist_ok=True)     # Ensure report directory exists
+    with open(report_loc, mode="w") as output_file:
+        output_file.write(report)
+
 def daily_report_template():
     """Returns a markdown template for the daily reports. This template will include
     percent-codes for information to be filled in by the calling function.
@@ -236,7 +334,7 @@ def traceroute_verbiage(datafile, data):
 
 
 def produce_daily_report(datafile):
-    """Produces an HTML report summarizing the day's activity. Stores it in the
+    """Produces a markdown report summarizing the day's activity. Stores it in the
     appropriate part of the local filesystem.
     """
     with open(datafile, mode="rb") as data_store:
@@ -255,6 +353,10 @@ def produce_daily_report(datafile):
 
 
 if __name__ == "__main__":
-    # most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
-    for d in glob.glob("""/home/patrick/Documents/programming/python_projects/network-reporter/data/2017/12/*pkl"""):
-        produce_daily_report(d)
+    if False:               # Previous tests and routine work
+        for d in glob.glob("""/home/patrick/Documents/programming/python_projects/network-reporter/data/2017/12/*pkl"""):
+            produce_daily_report(d)
+    if False:
+        most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
+    if True:
+        produce_monthly_report("/home/patrick/torrents/FourMileFlats internet/2017/12/data")
