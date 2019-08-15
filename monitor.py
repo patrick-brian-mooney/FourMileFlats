@@ -174,7 +174,7 @@ def schedule_daily_report_creation(data_file):
     _thread.start_new_thread(schedule_daily_report_creation, (current_data_store_name(),))
 
 def schedule_monthly_report_creation(data_folder_path):
-    pass
+    pass                                #FIXME: we never did implement this.
 
 def startup():
     """Execute necessary startup tasks."""

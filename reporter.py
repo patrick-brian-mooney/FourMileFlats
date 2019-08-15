@@ -119,11 +119,11 @@ def monthly_report_template():
 ## Daily logs
 
 %s
-""" # Substitute in: Situation; Month-Year; monthly summary data; links to daily ping and traceroute logs.
+""" # Substitute in: Situation; Month-Year string; monthly summary data; links to daily ping and traceroute logs.
     return ret
 
 
-def tests_failed_list(daily_data_dict):
+def tests_failed_summary(daily_data_dict):
     """Returns a summary list of all tests failed during the month, organized by
     category.
     """
@@ -157,6 +157,57 @@ def event_count_summary(daily_data_dict):
     return ret
 
 
+def count_untested_hours(daily_data_dict):
+    """Given the data dictionary in DAILY_DATA_DICT, count how many hours' worth of
+    tests were NOT performed during the monitoring period. Note that the monitoring
+    interval never changed from five minutes, though the scheduling WITHIN those
+    five minutes did change, so this is a fairly simple computation. Note that we
+    return a figure in hours.
+    """
+    count = 0
+    for day in daily_data_dict:
+        # FIXME: the next line is wrong on non-24-hour days, e.g. when going onto and off of daylight savings time.
+        count += (24 * 60//interval_between_pings) - len(daily_data_dict[day]['ping_transcripts'])
+    return count / 12       # If we missed three monitoring periods, that's 15 minutes, or 0.25 hours.
+
+
+def count_tested_hours(daily_data_dict):
+    """Count the number of hours' worth of tests performed and recorded in
+    DAILY_DATA_DICT.
+    """
+    count = 0
+    for day in daily_data_dict:
+        count += len(daily_data_dict[day]['ping_transcripts'])
+    return count / 12
+
+
+def count_untransmitted_packets(daily_data_dict):
+    """Count packets that could not be sent because the network service was
+    inadequate. That is, provide a count of packets that WOULD HAVE BEEN SENT, if
+    only there had been enough network service to run a ping test in the first
+    place. This involves interpreting (after the fact) ping transcripts that
+    could not be interpreted by the scripts at the time that the monitoring actually
+    occurred, as well as doing several other things. Note that this number
+    specifically excludes untransmitted packets that were already counted as
+    "errors" by the ping program; this routine only counts packets that were not
+    sent because the ping program could not run at all.
+
+    Returns the NUMBER OF PACKETS that WERE NOT transmitted during the monitoring
+    period and were not already counted as errors by the ping program.
+    """
+    ret = 0
+    for day in daily_data_dict:
+        for which_test in daily_data_dict[day]['ping_transcripts']:
+            this_test = daily_data_dict[day]['ping_transcripts'][which_test]
+            if len(this_test.keys()) == 1:        # something else weird is going on.
+                if 'transcript' in this_test:
+                    pass            # Interpret it
+                else:
+                    pass            # Deal with the fact that we have an unexpected form of test data.
+            elif False:
+                pass        # Other tests and checks?
+    return ret
+
 def monthly_summary(daily_data_dict):
     """Produces a markdown fragment containing the summary of monthly data.
     DAILY_DATA_DICT is of course the dictionary of pickled data that was assumbled
@@ -164,10 +215,17 @@ def monthly_summary(daily_data_dict):
     """
     total_transmitted = sum([item['packets_transmitted_today'] for item in daily_data_dict.values()])
     total_received = sum([item['packets_received_today'] for item in daily_data_dict.values()])
+    unsent_packets = count_untransmitted_packets(daily_data_dict)
+    untested_hours = count_untested_hours(daily_data_dict)
+    tested_hours = count_tested_hours(daily_data_dict)
     ret = """For this month, network-reporter has data for %d days: %s.
+    
+During those %d days, network-reporter is missing data for %f hours, or %.3f%% of that period.    
 
-During this time, network-reporter transmitted %d and received %d packets. That's an overall packet loss rate of %.3f %%.
-
+During the time it was running, network-reporter transmitted %d and received %d packets. That's an overall packet 
+loss rate of %.3f%%. This number does not include packets that *would have* been transmitted as part of a ping test, 
+but were not sent because network service was too poor to allow a ping test to be conducted. There were %d such 
+packets; counting these unsent packets as lost packets brings the total packet loss rate to %.3f%%.
 
 ## Summary of tests failed:
 
@@ -179,8 +237,9 @@ During this time, network-reporter transmitted %d and received %d packets. That'
 """
     ret = ret % (
         len(daily_data_dict), ', '.join(sorted([os.path.basename(item).strip().rstrip('.pkl') for item in daily_data_dict.keys()])),
-        total_transmitted, total_received, 100 * ((total_transmitted - total_received)/total_transmitted),
-        tests_failed_list(daily_data_dict),
+        len(daily_data_dict), untested_hours, 100 * (untested_hours / (untested_hours + tested_hours)),
+        total_transmitted, total_received, 100 * ((total_transmitted - total_received)/total_transmitted), unsent_packets, 100 * ((total_transmitted - total_received + unsent_packets)/(total_transmitted + unsent_packets)),
+        tests_failed_summary(daily_data_dict),
         event_count_summary(daily_data_dict),
     )
     return ret
@@ -195,7 +254,7 @@ def daily_links(daily_data_dict):
         ret = ""
         for date in sorted(daily_data_dict.keys()):
             key = os.path.basename(date).strip().rstrip('.pkl')
-            ret += "%s: [<code>ping</code>](%s)\n" % (key, key + ".md")
+            ret += "\n%s: [<code>ping</code>](%s)" % (key, key + ".md")
             if os.path.isfile(key + "-traceroute.md"):
                 ret += ", [<code>traceroute</code>(%s)" % (key + "-traceroute.md",)
         return ret
@@ -380,4 +439,4 @@ if __name__ == "__main__":
     if False:
         most_recent_report = sorted(glob.glob(os.path.join(data_location, "*pkl")))[-1]
     if True:
-        produce_monthly_report("/home/patrick/torrents/FourMileFlats internet/2017/12/data")
+        produce_monthly_report("/home/patrick/torrents/FourMileFlats internet/2018/10")
